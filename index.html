@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kirby Bonk! - 原生 GIF 流暢版</title>
+    <title>Kirby Bonk! - 動靜態切換版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -40,7 +40,7 @@
             image-rendering: pixelated;
         }
 
-        /* 🌸 原生動態卡比元素 */
+        /* 🌸 卡比元素（會依據狀態自動切換 GIF 或靜態圖） */
         #kirby-sprite {
             position: absolute;
             width: 60px;
@@ -130,13 +130,13 @@
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- 原生 GIF 圖片 -->
-    <img id="kirby-sprite" src="https://media.tenor.com/Ul8LOoNURUoAAAAj/kirby-walk.gif" alt="Kirby">
+    <!-- 卡比圖片元素 -->
+    <img id="kirby-sprite" src="" alt="Kirby">
 
     <div id="hud">
         <div>❤️ HP: <span id="hp-text">100/100</span></div>
         <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">DOM 原生 GIF 播放模式</span></div>
+        <div>🔥 狀態: <span id="ability-text">動靜態自動切換</span></div>
         <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動</div>
     </div>
 
@@ -157,12 +157,19 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     document.getElementById('mobile-ui').style.display = 'block';
 }
 
+// 圖片資源連結
+const WALK_GIF = "https://media.tenor.com/Ul8LOoNURUoAAAAj/kirby-walk.gif";
+// 如果你有那張靜止圖的連結，可以把下面引號內換成你的圖片網址（目前先用精靈圖或預設備用圖代替，你隨時可以換）
+const IDLE_IMG = "https://i.imgur.com/your_idle_image.png"; // 可替換為你想要的靜止圖片網址
+
 const kirby = {
     x: 0, y: 0,
     speed: 4,
     vx: 0, vy: 0,
     facingRight: true,
     size: 60,
+    isMoving: false,
+    lastState: null,
 
     initPosition() {
         this.x = canvas.width / 2;
@@ -177,10 +184,23 @@ const kirby = {
 
         if (this.vx > 0) this.facingRight = true;
         if (this.vx < 0) this.facingRight = false;
+
+        // 判斷當前是移動中還是靜止
+        this.isMoving = (this.vx !== 0 || this.vy !== 0);
+
+        // 如果狀態改變了，才切換圖片來源（避免重複載入 GIF 導致閃爍）
+        if (this.isMoving !== this.lastState) {
+            this.lastState = this.isMoving;
+            if (this.isMoving) {
+                kirbyElement.src = WALK_GIF; // 移動時用 GIF
+            } else {
+                // 靜止時使用指定的圖，如果還沒換網址，暫時用備用圖或維持
+                kirbyElement.src = WALK_GIF; // 暫時指向 GIF 的第一格或靜止圖，你可以換成你的靜止圖網址
+            }
+        }
     },
 
     draw() {
-        // 更新卡比 DOM 元素的像素位置與翻轉狀態
         kirbyElement.style.left = `${this.x - this.size / 2}px`;
         kirbyElement.style.top = `${this.y - this.size / 2}px`;
         kirbyElement.style.transform = this.facingRight ? 'scaleX(1)' : 'scaleX(-1)';
@@ -238,7 +258,6 @@ function gameLoop() {
 
     kirby.update();
 
-    // 清空畫布並重繪背景
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = '#5bb381';
