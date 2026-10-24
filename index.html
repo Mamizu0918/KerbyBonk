@@ -22,7 +22,6 @@
 
         .font-pixel { font-family: 'Press Start 2P', cursive; }
 
-        /* 高清 GBA 像素化 Crisp Canvas */
         #gameCanvas {
             display: block;
             width: 100vw;
@@ -32,7 +31,6 @@
             image-rendering: -moz-crisp-edges;
         }
 
-        /* 復古掃描線濾鏡 */
         .scanlines::before {
             content: " ";
             display: block;
@@ -45,7 +43,6 @@
             opacity: 0.35;
         }
 
-        /* 響應式搖桿 (置中靠下) */
         #joystick-container {
             position: absolute;
             bottom: calc(24px + env(safe-area-inset-bottom, 0px));
@@ -122,7 +119,6 @@
         }
         .pixel-input:focus { border-color: #ff76a3; }
 
-        /* 自訂捲軸滾動條 */
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #110d24; border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #ff76a3; border-radius: 4px; }
@@ -130,7 +126,6 @@
 </head>
 <body class="relative w-screen h-screen overflow-hidden bg-slate-950">
 
-    <!-- 遊戲頂端 HUD 列 -->
     <div id="game-hud" class="hidden absolute top-2 left-2 right-2 z-20 flex justify-between items-center pointer-events-none text-white px-1 sm:px-4">
         <div class="flex items-center gap-2 sm:gap-3 bg-slate-900/90 border-2 border-pink-400 p-1.5 sm:p-2 rounded-lg shadow-lg pointer-events-auto">
             <div id="class-avatar" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-pink-500 border-2 border-white flex items-center justify-center font-bold text-sm sm:text-lg shadow-inner">
@@ -165,19 +160,16 @@
         </div>
     </div>
 
-    <!-- 畫布與掃描線特效容器 -->
     <div id="canvas-container" class="relative w-full h-full overflow-hidden scanlines">
         <canvas id="gameCanvas"></canvas>
     </div>
 
-    <!-- 手機端動態置中靠下虛擬搖桿 -->
     <div id="joystick-container" class="md:hidden hidden">
         <div id="joystick-base">
             <div id="joystick-stick"></div>
         </div>
     </div>
 
-    <!-- 主選單 / 開始畫面 -->
     <div id="start-screen" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
         <div class="pixel-card p-5 sm:p-8 rounded-2xl max-w-md w-full text-center border-4 border-pink-400 shadow-2xl relative">
             <div class="absolute top-3 right-3 bg-pink-950 border border-pink-400 text-pink-300 font-pixel text-[8px] px-2 py-1 rounded-full shadow">v1.5.2 效能穩定版</div>
@@ -198,7 +190,6 @@
         </div>
     </div>
 
-    <!-- 排行榜 Modal -->
     <div id="leaderboard-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
         <div class="pixel-card p-4 sm:p-6 rounded-2xl max-w-md w-full border-4 border-yellow-400 shadow-2xl flex flex-col max-h-[85vh]">
             <h2 class="text-lg sm:text-xl font-bold text-yellow-300 font-pixel mb-4 text-center">🏆 生存排行榜</h2>
@@ -221,7 +212,6 @@
         </div>
     </div>
 
-    <!-- 更新日誌 Modal -->
     <div id="changelog-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
         <div class="pixel-card p-5 sm:p-6 rounded-2xl max-w-lg w-full border-4 border-purple-400 shadow-2xl flex flex-col max-h-[85vh]">
             <h2 class="text-lg sm:text-xl font-bold text-yellow-300 font-pixel mb-3 pb-2 border-b border-purple-500/40">版本更新日誌</h2>
@@ -229,14 +219,8 @@
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-red-400/50">
                     <div class="font-bold text-red-300 font-pixel mb-1">v1.5.2 (效能穩定版)</div>
                     <ul class="list-disc list-inside space-y-1 text-slate-300 text-[11px] sm:text-xs">
-                        <li><b>修復崩潰問題</b>：修正遊玩 1 分鐘時的卡死與無窮迴圈生成 Bug。</li>
+                        <li><b>修復崩潰問題</b>：修正遊玩 1 分鐘時的記憶體堆積、無窮迴圈與實體過多卡死 Bug。</li>
                         <li><b>效能優化</b>：限制同畫面實體數量，加入離屏垃圾回收機制 (GC)。</li>
-                    </ul>
-                </div>
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-blue-400/50">
-                    <div class="font-bold text-blue-300 font-pixel mb-1">v1.5.1 (便捷排行榜)</div>
-                    <ul class="list-disc list-inside space-y-1 text-slate-300 text-[11px] sm:text-xs">
-                        <li>移除信箱登入，直接輸入暱稱遊玩，破關自動上傳高分。</li>
                     </ul>
                 </div>
             </div>
@@ -244,7 +228,6 @@
         </div>
     </div>
 
-    <!-- 🍎 發現果實選擇 Modal -->
     <div id="fruit-modal" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
         <div class="pixel-card p-5 sm:p-6 rounded-2xl max-w-sm w-full text-center border-4 border-green-400 shadow-2xl">
             <div class="text-5xl mb-3">🍎</div>
@@ -263,7 +246,6 @@
         </div>
     </div>
 
-    <!-- 升級選單 Modal -->
     <div id="upgrade-modal" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
         <div class="pixel-card p-5 sm:p-6 rounded-2xl max-w-lg w-full text-center border-4 border-yellow-400 shadow-2xl">
             <h2 class="text-xl sm:text-2xl font-bold text-yellow-300 font-pixel mb-1">等級提升！</h2>
@@ -272,7 +254,6 @@
         </div>
     </div>
 
-    <!-- 遊戲結束 Modal -->
     <div id="game-over-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
         <div class="pixel-card p-6 rounded-2xl max-w-md w-full text-center border-4 border-red-500">
             <h2 class="text-2xl sm:text-3xl font-bold text-red-400 font-pixel mb-2">遊戲結束</h2>
@@ -289,9 +270,6 @@
     </div>
 
     <script type="module">
-        // ==========================================
-        // Firebase Setup & Auth Logic (v1.5.2)
-        // ==========================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -322,7 +300,6 @@
             scoreStatus: document.getElementById('score-status')
         };
 
-        // Leaderboard Logic
         document.getElementById('leaderboard-btn').addEventListener('click', async () => {
             document.getElementById('leaderboard-modal').classList.remove('hidden');
             const listEl = document.getElementById('leaderboard-list');
@@ -336,19 +313,18 @@
             }
 
             try {
-                // RULE 2: No Complex Queries. Fetch all, sort in memory.
                 const snapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'kirby_scores'));
                 let scores = [];
                 snapshot.forEach(doc => scores.push(doc.data()));
                 
                 scores.sort((a, b) => b.time - a.time);
-                scores = scores.slice(0, 10); // Top 10
+                scores = scores.slice(0, 10);
 
                 loadEl.classList.add('hidden');
                 scores.forEach((s, index) => {
                     const mins = Math.floor(s.time / 60).toString().padStart(2, '0');
                     const secs = Math.floor(s.time % 60).toString().padStart(2, '0');
-                    const displayName = s.nickname || (s.email ? s.email.split('@')[0] : "匿名卡比");
+                    const displayName = s.nickname || "匿名卡比";
                     const tr = document.createElement('tr');
                     tr.className = "border-b border-slate-700/50";
                     tr.innerHTML = `
@@ -370,9 +346,6 @@
             document.getElementById('leaderboard-modal').classList.add('hidden');
         });
 
-        // ==========================================
-        // Game Engine & Rendering Logic
-        // ==========================================
         class SoundFX {
             constructor() { this.ctx = null; }
             init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -405,9 +378,9 @@
         const VIRTUAL_HEIGHT = 320; 
         let viewWidth = 480, viewHeight = 320, scaleFactor = 1;
 
-        // V1.5.2 Performance Hard Caps
-        const MAX_ENEMIES = 250;
-        const MAX_GEMS = 300;
+        // V1.5.2 嚴格實體上限，防止記憶體崩潰
+        const MAX_ENEMIES = 150;
+        const MAX_GEMS = 200;
 
         function resizeCanvas() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -442,6 +415,7 @@
             Sprites.kirbyHAMMER = createPixelSprite(24, 24, c => { drawBody(c); c.fillStyle='#b91c1c'; c.fillRect(4,2,16,4); c.fillStyle='#facc15'; c.fillRect(9,1,6,5); c.fillStyle='#1e3a8a'; c.fillRect(11,2,2,3); });
             Sprites.waddleDee = createPixelSprite(20, 20, c => { c.fillStyle='#f97316'; c.fillRect(4,2,12,16); c.fillRect(2,4,16,12); c.fillStyle='#fed7aa'; c.fillRect(5,5,10,11); c.fillStyle='#1e293b'; c.fillRect(7,7,2,4); c.fillRect(11,7,2,4); c.fillStyle='#ea580c'; c.fillRect(2,15,5,4); c.fillRect(13,15,5,4); });
             Sprites.gordo = createPixelSprite(20, 20, c => { c.fillStyle='#334155'; c.fillRect(4,4,12,12); c.fillStyle='#94a3b8'; c.fillRect(9,0,2,4); c.fillRect(9,16,2,4); c.fillRect(0,9,4,2); c.fillRect(16,9,4,2); c.fillStyle='#ffffff'; c.fillRect(6,7,3,4); c.fillRect(11,7,3,4); c.fillStyle='#000000'; c.fillRect(7,8,2,3); c.fillRect(11,8,2,3); });
+            Sprites.scarfy = createPixelSprite(20, 20, c => { c.fillStyle='#dc2626'; c.fillRect(4,4,12,12); c.fillStyle='#f87171'; c.fillRect(6,6,8,8); c.fillStyle='#000'; c.fillRect(8,8,4,4); });
             Sprites.star = createPixelSprite(10, 10, c => { c.fillStyle='#facc15'; c.fillRect(4,0,2,10); c.fillRect(0,4,10,2); c.fillRect(2,2,6,6); });
             ['SWORD','FIRE','CUTTER','SPARK','BEAM','HAMMER'].forEach(t => {
                 Sprites['fruit_'+t] = createPixelSprite(18, 18, c => { c.fillStyle='#ef4444'; c.fillRect(4,4,10,12); c.fillRect(3,6,12,8); c.fillStyle='#22c55e'; c.fillRect(8,0,3,4); c.fillRect(11,1,3,2); c.fillStyle='#facc15'; c.fillRect(7,7,4,4); });
@@ -461,7 +435,7 @@
 
         let gameState = 'START'; 
         let gameTime = 0, killCount = 0, frameCount = 0;
-        let nextFruitTime = 45; // V1.5.2 logic fix
+        let nextFruitTime = 45; 
         let playerModifiers = { dmgMult: 1.0, cdMult: 1.0, rangeMult: 1.0, speedMult: 1.0 };
         const player = { x: 0, y: 0, vx: 0, vy: 0, baseSpeed: 2.2, speed: 2.2, hp: 100, maxHp: 100, level: 1, exp: 0, nextExp: 10, facing: 1, size: 20, currentClass: 'NORMAL', attackTimer: 0 };
         let enemies = [], projectiles = [], expStars = [], fruits = [], particleEffects = [], floatingTexts = [];
@@ -471,7 +445,6 @@
         window.addEventListener('keydown', e => keys[e.code] = true);
         window.addEventListener('keyup', e => keys[e.code] = false);
 
-        // Joystick
         const joyContainer = document.getElementById('joystick-container');
         const joyStick = document.getElementById('joystick-stick');
         let joyActive = false, joyVector = { x: 0, y: 0 };
@@ -490,10 +463,9 @@
         function triggerShake(intensity, duration) { screenShake.intensity = intensity; screenShake.duration = duration; }
         function showDamage(x, y, amount, isCrit=false, clr=null) { floatingTexts.push({ x: x+(Math.random()-0.5)*20, y: y-10, text: amount, life: 35, maxLife: 35, isCrit, vy: -1.5-Math.random(), color: clr }); }
         function createHitSpark(x, y, color='#fde047') {
-            for(let i=0; i<4; i++) { const angle = (Math.PI/2*i)+(Math.random()*0.4-0.2); particleEffects.push({ type: 'HIT_SPARK', x, y, vx: Math.cos(angle)*(2+Math.random()*2), vy: Math.sin(angle)*(2+Math.random()*2), life: 12, maxLife: 12, color }); }
+            for(let i=0; i<3; i++) { const angle = (Math.PI/2*i)+(Math.random()*0.4-0.2); particleEffects.push({ type: 'HIT_SPARK', x, y, vx: Math.cos(angle)*(2+Math.random()*2), vy: Math.sin(angle)*(2+Math.random()*2), life: 10, maxLife: 10, color }); }
         }
 
-        // Fruit Logic
         function triggerFruitModal(type) {
             gameState = 'FRUIT'; pendingFruitType = type;
             document.getElementById('fruit-modal-name').innerText = CLASSES[type].name;
@@ -501,7 +473,7 @@
         }
         document.getElementById('fruit-btn-transform').addEventListener('click', () => {
             player.currentClass = pendingFruitType; sfx.transform(); triggerShake(4, 10);
-            for (let i=0; i<16; i++) { const angle = (Math.PI*2/16)*i; particleEffects.push({ type: 'TRANSFORM_RING', x: player.x, y: player.y, vx: Math.cos(angle)*3, vy: Math.sin(angle)*3, color: CLASSES[pendingFruitType].color, life: 25 }); }
+            for (let i=0; i<12; i++) { const angle = (Math.PI*2/12)*i; particleEffects.push({ type: 'TRANSFORM_RING', x: player.x, y: player.y, vx: Math.cos(angle)*3, vy: Math.sin(angle)*3, color: CLASSES[pendingFruitType].color, life: 20 }); }
             document.getElementById('fruit-modal').classList.add('hidden'); gameState = 'PLAYING'; updateHUD();
         });
         document.getElementById('fruit-btn-energy').addEventListener('click', () => {
@@ -514,7 +486,7 @@
             player.x = 0; player.y = 0; player.maxHp = 100; player.hp = 100; player.level = 1; player.exp = 0; player.nextExp = 15;
             player.currentClass = 'NORMAL'; player.attackTimer = 0; playerModifiers = { dmgMult: 1.0, cdMult: 1.0, rangeMult: 1.0, speedMult: 1.0 }; player.speed = player.baseSpeed;
             gameTime = 0; killCount = 0; frameCount = 0;
-            nextFruitTime = 45; // Reset V1.5.2 spawn timer
+            nextFruitTime = 45;
             enemies = []; projectiles = []; expStars = []; fruits = []; particleEffects = []; floatingTexts = [];
             ui.startScreen.classList.add('hidden');
             document.getElementById('game-hud').classList.remove('hidden');
@@ -568,28 +540,27 @@
                 sfx.star(); let target = null; let minDist = 999;
                 enemies.forEach(e => { const d = Math.hypot(e.x - player.x, e.y - player.y); if (d < minDist) { minDist = d; target = e; } });
                 const angle = target ? Math.atan2(target.y - player.y, target.x - player.x) : (player.facing === 1 ? 0 : Math.PI);
-                projectiles.push({ type: 'STAR_BULLET', x: player.x, y: player.y, vx: Math.cos(angle)*bs.speed, vy: Math.sin(angle)*bs.speed, life: 45, maxLife: 45, damage: actDmg });
+                projectiles.push({ type: 'STAR_BULLET', x: player.x, y: player.y, vx: Math.cos(angle)*bs.speed, vy: Math.sin(angle)*bs.speed, life: 40, maxLife: 40, damage: actDmg });
             } else if (player.currentClass === 'SWORD') {
-                sfx.slash(); projectiles.push({ type: 'SWORD_SLASH', x: player.x, y: player.y, dir: player.facing, range: actRange, life: 14, maxLife: 14, damage: actDmg });
+                sfx.slash(); projectiles.push({ type: 'SWORD_SLASH', x: player.x, y: player.y, dir: player.facing, range: actRange, life: 12, maxLife: 12, damage: actDmg });
             } else if (player.currentClass === 'FIRE') {
-                sfx.fire(); projectiles.push({ type: 'FIRE_BURST', x: player.x, y: player.y, radius: (bs.auraRadius || 0)*playerModifiers.rangeMult, life: 15, maxLife: 15, damage: actDmg });
+                sfx.fire(); projectiles.push({ type: 'FIRE_BURST', x: player.x, y: player.y, radius: (bs.auraRadius || 0)*playerModifiers.rangeMult, life: 12, maxLife: 12, damage: actDmg });
             } else if (player.currentClass === 'CUTTER') {
-                sfx.slash(); projectiles.push({ type: 'CUTTER_BLADE', x: player.x, y: player.y, vx: player.facing*bs.speed, vy: (Math.random()-0.5)*2, life: 60, maxLife: 60, damage: actDmg });
+                sfx.slash(); projectiles.push({ type: 'CUTTER_BLADE', x: player.x, y: player.y, vx: player.facing*bs.speed, vy: (Math.random()-0.5)*2, life: 50, maxLife: 50, damage: actDmg });
             } else if (player.currentClass === 'SPARK') {
-                sfx.spark(); const targets = [...enemies].sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y)).slice(0, bs.chainTargets+Math.floor(playerModifiers.rangeMult));
-                targets.forEach(t => { applyDamage(t, actDmg, 'SPARK'); triggerShake(2,4); particleEffects.push({ type:'LIGHTNING', x1:player.x, y1:player.y, x2:t.x, y2:t.y, life:12, maxLife:12 }); });
+                sfx.spark(); const targets = [...enemies].sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y)).slice(0, bs.chainTargets);
+                targets.forEach(t => { applyDamage(t, actDmg, 'SPARK'); triggerShake(2,3); particleEffects.push({ type:'LIGHTNING', x1:player.x, y1:player.y, x2:t.x, y2:t.y, life:10, maxLife:10 }); });
             } else if (player.currentClass === 'BEAM') {
-                sfx.spark(); projectiles.push({ type: 'BEAM_WHIP', x: player.x, y: player.y, dir: player.facing, range: actRange, life: 16, maxLife: 16, damage: actDmg });
+                sfx.spark(); projectiles.push({ type: 'BEAM_WHIP', x: player.x, y: player.y, dir: player.facing, range: actRange, life: 14, maxLife: 14, damage: actDmg });
             } else if (player.currentClass === 'HAMMER') {
                 sfx.hammer(); const isCrit = Math.random() < bs.critChance;
-                projectiles.push({ type: 'HAMMER_SMASH', x: player.x + player.facing * 15, y: player.y, radius: (bs.smashRadius || 0)*playerModifiers.rangeMult, life: 15, maxLife: 15, damage: actDmg * (isCrit?2.5:1.0), isCrit });
-                triggerShake(isCrit?8:4, 10);
+                projectiles.push({ type: 'HAMMER_SMASH', x: player.x + player.facing * 15, y: player.y, radius: (bs.smashRadius || 0)*playerModifiers.rangeMult, life: 12, maxLife: 12, damage: actDmg * (isCrit?2.5:1.0), isCrit });
+                triggerShake(isCrit?7:3, 8);
             }
         }
 
         function applyDamage(e, dmg, pType, isCrit=false) {
-            e.hp -= dmg; e.hitFlash = 6; showDamage(e.x, e.y, Math.ceil(dmg), isCrit); createHitSpark(e.x, e.y, isCrit?'#ef4444':'#ffffff');
-            if(pType === 'SWORD_SLASH' || pType === 'HAMMER_SMASH') { const kb = pType==='HAMMER_SMASH'?(isCrit?20:10):5; const a = Math.atan2(e.y-player.y, e.x-player.x); e.x+=Math.cos(a)*kb; e.y+=Math.sin(a)*kb; }
+            e.hp -= dmg; e.hitFlash = 5; showDamage(e.x, e.y, Math.ceil(dmg), isCrit); createHitSpark(e.x, e.y, isCrit?'#ef4444':'#ffffff');
         }
 
         function update() {
@@ -610,61 +581,92 @@
 
             handleAttacks();
 
-            // V1.5.2 Time-based strict spawn checks to prevent crashes
+            // 果實生成邏輯檢查
             if (gameTime >= nextFruitTime) {
-                nextFruitTime += 45; // Safe queueing
-                const types = ['SWORD','FIRE','CUTTER','SPARK','BEAM','HAMMER']; const fType = types[Math.floor(Math.random()*types.length)];
-                const fAngle = Math.random() * Math.PI*2; const fDist = 90 + Math.random()*60; 
+                nextFruitTime += 45;
+                const types = ['SWORD','FIRE','CUTTER','SPARK','BEAM','HAMMER']; 
+                const fType = types[Math.floor(Math.random()*types.length)];
+                const fAngle = Math.random() * Math.PI*2; const fDist = 100 + Math.random()*50; 
                 fruits.push({ x: player.x+Math.cos(fAngle)*fDist, y: player.y+Math.sin(fAngle)*fDist, type: fType, floatY: 0, tick: 0 }); 
                 sfx.fruitAppears();
             }
 
-            // V1.5.2 Enemy Spawn scaling with Hard Limit (Prevent Memory Crash)
-            let spawnRate = Math.max(15, 45 - Math.floor(gameTime / 5)); // Cap spawn rate
+            // 敵人生成：隨時間加速，但嚴格限制 MAX_ENEMIES 上限
+            let spawnRate = Math.max(20, 50 - Math.floor(gameTime / 4));
             if (frameCount % spawnRate === 0 && enemies.length < MAX_ENEMIES) {
-                const dist = Math.hypot(viewWidth, viewHeight)/2 + 20; const a = Math.random()*Math.PI*2;
-                let t = 'waddleDee', hp = 15+gameTime*0.4, spd = 0.8+Math.random()*0.4, sz = 20;
-                if (gameTime>60 && Math.random()>0.6) { t='scarfy'; hp=25+gameTime*0.5; spd=1.35; } else if(gameTime>120 && Math.random()>0.8){ t='gordo'; hp=60+gameTime*1.0; spd=0.5; sz=22; }
+                const dist = Math.hypot(viewWidth, viewHeight)/2 + 40; const a = Math.random()*Math.PI*2;
+                let t = 'waddleDee', hp = 15+gameTime*0.3, spd = 0.9+Math.random()*0.3, sz = 20;
+                if (gameTime>45 && Math.random()>0.5) { t='scarfy'; hp=20+gameTime*0.4; spd=1.2; } 
+                else if(gameTime>90 && Math.random()>0.7){ t='gordo'; hp=50+gameTime*0.8; spd=0.5; sz=22; }
                 enemies.push({ x: player.x+Math.cos(a)*dist, y: player.y+Math.sin(a)*dist, type: t, hp, maxHp: hp, speed: spd, size: sz, hitFlash: 0 });
             }
 
+            // 更新投擲物
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i]; p.life--;
-                
-                // V1.5.2 GC Bounds Check
-                if (Math.abs(p.x - player.x) > 1000 || Math.abs(p.y - player.y) > 1000) p.life = 0;
-
                 if (p.type === 'STAR_BULLET' || p.type === 'CUTTER_BLADE') {
                     p.x += p.vx; p.y += p.vy;
                     enemies.forEach(e => { if (e.hitFlash <= 0 && Math.hypot(e.x-p.x, e.y-p.y) < e.size/2+6) { applyDamage(e, p.damage, p.type); sfx.hit(); if(p.type === 'STAR_BULLET') p.life = 0; } });
-                } else if (p.type === 'SWORD_SLASH' && p.life === p.maxLife - 2) { const atkX = player.x + p.dir*15; enemies.forEach(e => { if(Math.hypot(e.x-atkX, e.y-player.y) < p.range) applyDamage(e, p.damage, p.type); });
-                } else if (p.type === 'FIRE_BURST' && frameCount % 10 === 0) { enemies.forEach(e => { if(Math.hypot(e.x-player.x, e.y-player.y) < p.radius+e.size/2) applyDamage(e, p.damage/3, p.type); });
-                } else if (p.type === 'BEAM_WHIP' && p.life === p.maxLife - 3) { const bx = player.x + p.dir*25; enemies.forEach(e => { if(Math.hypot(e.x-bx, e.y-player.y) < p.range) applyDamage(e, p.damage, p.type); });
-                } else if (p.type === 'HAMMER_SMASH' && p.life === p.maxLife - 2) { enemies.forEach(e => { if(Math.hypot(e.x-p.x, e.y-p.y) < p.radius+e.size/2) applyDamage(e, p.damage, p.type, p.isCrit); }); }
+                } else if (p.type === 'SWORD_SLASH' && p.life === p.maxLife - 2) { 
+                    const atkX = player.x + p.dir*15; 
+                    enemies.forEach(e => { if(Math.hypot(e.x-atkX, e.y-player.y) < p.range) applyDamage(e, p.damage, p.type); });
+                } else if (p.type === 'FIRE_BURST' && frameCount % 12 === 0) { 
+                    enemies.forEach(e => { if(Math.hypot(e.x-player.x, e.y-player.y) < p.radius+e.size/2) applyDamage(e, p.damage/3, p.type); });
+                } else if (p.type === 'BEAM_WHIP' && p.life === p.maxLife - 3) { 
+                    const bx = player.x + p.dir*25; 
+                    enemies.forEach(e => { if(Math.hypot(e.x-bx, e.y-player.y) < p.range) applyDamage(e, p.damage, p.type); });
+                } else if (p.type === 'HAMMER_SMASH' && p.life === p.maxLife - 2) { 
+                    enemies.forEach(e => { if(Math.hypot(e.x-p.x, e.y-p.y) < p.radius+e.size/2) applyDamage(e, p.damage, p.type, p.isCrit); }); 
+                }
                 if (p.life <= 0) projectiles.splice(i, 1);
             }
 
+            // 更新敵人與離屏清理 (GC)
             for (let i = enemies.length - 1; i >= 0; i--) {
-                const e = enemies[i]; if(e.hitFlash > 0) e.hitFlash--; const a = Math.atan2(player.y-e.y, player.x-e.x); e.x+=Math.cos(a)*e.speed; e.y+=Math.sin(a)*e.speed;
+                const e = enemies[i]; 
+                if(e.hitFlash > 0) e.hitFlash--; 
                 
-                // V1.5.2 GC for heavily off-screen enemies to avoid buildup memory leaks
-                if (Math.abs(e.x - player.x) > 1500 || Math.abs(e.y - player.y) > 1500) { enemies.splice(i, 1); continue; }
+                // 距離玩家過遠直接回收，防止效能卡死
+                if (Math.abs(e.x - player.x) > 1200 || Math.abs(e.y - player.y) > 1200) { 
+                    enemies.splice(i, 1); 
+                    continue; 
+                }
 
-                if (Math.hypot(player.x-e.x, player.y-e.y) < (e.size/2+player.size/2-2)) { player.hp -= (e.type==='gordo'?0.8:0.4); triggerShake(1.5, 3); if(player.hp<=0) gameOver(); }
+                const a = Math.atan2(player.y-e.y, player.x-e.x); 
+                e.x += Math.cos(a)*e.speed; 
+                e.y += Math.sin(a)*e.speed;
+
+                if (Math.hypot(player.x-e.x, player.y-e.y) < (e.size/2+player.size/2-2)) { 
+                    player.hp -= (e.type==='gordo'?0.8:0.4); 
+                    triggerShake(1.5, 3); 
+                    if(player.hp<=0) gameOver(); 
+                }
                 
                 if (e.hp <= 0) { 
-                    killCount++; createHitSpark(e.x, e.y, '#94a3b8'); 
+                    killCount++; 
+                    createHitSpark(e.x, e.y, '#94a3b8'); 
                     expStars.push({ x: e.x, y: e.y, value: e.type==='gordo'?12:6 }); 
                     
-                    // V1.5.2 Gem Hard cap
+                    // 經驗星超過上限時移除最早的
                     if (expStars.length > MAX_GEMS) expStars.shift(); 
                     
                     enemies.splice(i, 1); 
                 }
             }
 
-            for (let i = expStars.length - 1; i >= 0; i--) { const s = expStars[i]; const d = Math.hypot(player.x-s.x, player.y-s.y); if(d<75){s.x+=(player.x-s.x)*0.18; s.y+=(player.y-s.y)*0.18;} if(d<12){player.exp+=s.value; sfx.star(); expStars.splice(i,1); checkLevelUp();} }
-            for (let i = fruits.length - 1; i >= 0; i--) { const f = fruits[i]; f.tick+=0.1; f.floatY=Math.sin(f.tick)*4; if(Math.hypot(player.x-f.x, player.y-f.y)<22){ triggerFruitModal(f.type); fruits.splice(i,1); return; } }
+            // 更新經驗星吸附
+            for (let i = expStars.length - 1; i >= 0; i--) { 
+                const s = expStars[i]; 
+                const d = Math.hypot(player.x-s.x, player.y-s.y); 
+                if(d < 80) { s.x += (player.x-s.x)*0.2; s.y += (player.y-s.y)*0.2; } 
+                if(d < 12) { player.exp += s.value; sfx.star(); expStars.splice(i, 1); checkLevelUp(); } 
+            }
+
+            // 更新果實碰撞
+            for (let i = fruits.length - 1; i >= 0; i--) { 
+                const f = fruits[i]; f.tick += 0.1; f.floatY = Math.sin(f.tick)*4; 
+                if(Math.hypot(player.x-f.x, player.y-f.y) < 24){ triggerFruitModal(f.type); fruits.splice(i, 1); return; } 
+            }
 
             for (let i = particleEffects.length - 1; i >= 0; i--) { const pt = particleEffects[i]; pt.life--; if(pt.vx!==undefined) pt.x+=pt.vx; if(pt.vy!==undefined) pt.y+=pt.vy; if(pt.life<=0) particleEffects.splice(i,1); }
             for (let i = floatingTexts.length - 1; i >= 0; i--) { const ft = floatingTexts[i]; ft.life--; ft.y+=ft.vy; if(ft.life<=0) floatingTexts.splice(i,1); }
@@ -695,7 +697,7 @@
 
             particleEffects.forEach(pt => {
                 ctx.save();
-                if(pt.type==='LIGHTNING'){ ctx.beginPath(); ctx.moveTo(pt.x1,pt.y1); for(let i=1;i<=3;i++){ ctx.lineTo(i===3?pt.x2:pt.x1+(pt.x2-pt.x1)*(i/3)+(Math.random()-0.5)*15, i===3?pt.y2:pt.y1+(pt.y2-pt.y1)*(i/3)+(Math.random()-0.5)*15); } ctx.strokeStyle=(frameCount%2===0)?'#ffffff':'#38bdf8'; ctx.lineWidth=2+Math.random()*2; ctx.stroke(); }
+                if(pt.type==='LIGHTNING'){ ctx.beginPath(); ctx.moveTo(pt.x1,pt.y1); for(let i=1;i<=3;i++){ ctx.lineTo(i===3?pt.x2:pt.x1+(pt.x2-pt.x1)*(i/3)+(Math.random()-0.5)*15, i===3?pt.y2:pt.y1+(pt.y2-pt.y1)*(i/3)+(Math.random()-0.5)*15); } ctx.strokeStyle=(frameCount%2===0)?'#ffffff':'#38bdf8'; ctx.lineWidth=2; ctx.stroke(); }
                 else if(pt.type==='HIT_SPARK'||pt.type==='TRANSFORM_RING'){ ctx.fillStyle=pt.color; ctx.globalAlpha=pt.life/pt.maxLife; ctx.fillRect(Math.round(pt.x-2), Math.round(pt.y-2), 4, 4); }
                 ctx.restore();
             });
@@ -703,12 +705,12 @@
             projectiles.forEach(p => {
                 if(p.type==='STAR_BULLET') ctx.drawImage(Sprites.star, Math.round(p.x-5), Math.round(p.y-5));
                 else if(p.type==='SWORD_SLASH'){ ctx.save(); ctx.translate(Math.round(player.x), Math.round(player.y)); ctx.beginPath(); const prog = 1-(p.life/p.maxLife); const sA = p.dir===1?-Math.PI*0.7:Math.PI*1.7; ctx.arc(0,0,p.range, sA, sA+p.dir*Math.PI*1.2*prog, p.dir===-1); ctx.lineWidth=15*(1-prog); ctx.lineCap='round'; const grad = ctx.createLinearGradient(0,0,p.dir*p.range,0); grad.addColorStop(0,'#ffffff'); grad.addColorStop(0.3,'#4ade80'); grad.addColorStop(1,'transparent'); ctx.strokeStyle=grad; ctx.stroke(); ctx.restore(); }
-                else if(p.type==='CUTTER_BLADE'){ for(let i=0;i<3;i++){ ctx.save(); ctx.translate(Math.round(p.x-p.vx*i*1.5), Math.round(p.y-p.vy*i*1.5)); ctx.rotate((frameCount-i*2)*0.6); ctx.globalAlpha=1-(i*0.3); ctx.fillStyle='#facc15'; ctx.fillRect(-8,-2,16,4); ctx.fillStyle='#ffffff'; ctx.fillRect(-2,-8,4,16); ctx.restore(); } }
-                else if(p.type==='BEAM_WHIP'){ ctx.save(); ctx.translate(Math.round(player.x), Math.round(player.y)); const prog = 1-(p.life/p.maxLife); const angle = (p.dir===1?-0.8:Math.PI-0.8)+p.dir*1.6*prog; for(let i=0;i<5;i++){ const dist=p.range*(i/4); ctx.beginPath(); ctx.arc(Math.cos(angle)*dist, Math.sin(angle)*dist, 4+i, 0, Math.PI*2); ctx.fillStyle=`rgba(192, 132, 252, ${0.4+i*0.1})`; ctx.fill(); } ctx.restore(); }
-                else if(p.type==='HAMMER_SMASH'){ ctx.save(); const prog = 1-(p.life/p.maxLife); ctx.beginPath(); ctx.arc(p.x, p.y, p.radius*prog, 0, Math.PI*2); ctx.strokeStyle=p.isCrit?'#ef4444':'#facc15'; ctx.lineWidth=6*(1-prog); ctx.stroke(); ctx.beginPath(); ctx.arc(p.x, p.y, (p.radius*0.6)*prog, 0, Math.PI*2); ctx.fillStyle=p.isCrit?'rgba(239,68,68,0.4)':'rgba(250,204,21,0.4)'; ctx.fill(); ctx.restore(); }
+                else if(p.type==='CUTTER_BLADE'){ for(let i=0;i<2;i++){ ctx.save(); ctx.translate(Math.round(p.x-p.vx*i*1.5), Math.round(p.y-p.vy*i*1.5)); ctx.rotate((frameCount-i*2)*0.6); ctx.globalAlpha=1-(i*0.4); ctx.fillStyle='#facc15'; ctx.fillRect(-8,-2,16,4); ctx.fillStyle='#ffffff'; ctx.fillRect(-2,-8,4,16); ctx.restore(); } }
+                else if(p.type==='BEAM_WHIP'){ ctx.save(); ctx.translate(Math.round(player.x), Math.round(player.y)); const prog = 1-(p.life/p.maxLife); const angle = (p.dir===1?-0.8:Math.PI-0.8)+p.dir*1.6*prog; for(let i=0;i<4;i++){ const dist=p.range*(i/3); ctx.beginPath(); ctx.arc(Math.cos(angle)*dist, Math.sin(angle)*dist, 4+i, 0, Math.PI*2); ctx.fillStyle=`rgba(192, 132, 252, ${0.4+i*0.1})`; ctx.fill(); } ctx.restore(); }
+                else if(p.type==='HAMMER_SMASH'){ ctx.save(); const prog = 1-(p.life/p.maxLife); ctx.beginPath(); ctx.arc(p.x, p.y, p.radius*prog, 0, Math.PI*2); ctx.strokeStyle=p.isCrit?'#ef4444':'#facc15'; ctx.lineWidth=6*(1-prog); ctx.stroke(); ctx.restore(); }
             });
 
-            floatingTexts.forEach(ft => { ctx.save(); ctx.font = ft.isCrit?'900 16px "Noto Sans TC"':'900 10px "Noto Sans TC"'; ctx.textAlign='center'; ctx.globalAlpha=ft.life/ft.maxLife; ctx.lineWidth=ft.isCrit?3:2; ctx.strokeStyle='#000000'; ctx.strokeText(ft.text, ft.x, ft.y); ctx.fillStyle=ft.color||(ft.isCrit?'#ef4444':'#ffffff'); ctx.fillText(ft.text, ft.x, ft.y); ctx.restore(); });
+            floatingTexts.forEach(ft => { ctx.save(); ctx.font = ft.isCrit?'900 14px "Noto Sans TC"':'900 10px "Noto Sans TC"'; ctx.textAlign='center'; ctx.globalAlpha=ft.life/ft.maxLife; ctx.lineWidth=2; ctx.strokeStyle='#000000'; ctx.strokeText(ft.text, ft.x, ft.y); ctx.fillStyle=ft.color||(ft.isCrit?'#ef4444':'#ffffff'); ctx.fillText(ft.text, ft.x, ft.y); ctx.restore(); });
             ctx.restore();
         }
 
@@ -726,7 +728,6 @@
             
             document.getElementById('game-over-modal').classList.remove('hidden');
 
-            // 自動上傳分數
             if (currentUser && db) {
                 ui.scoreStatus.innerText = "正在上傳高分至排行榜...";
                 ui.scoreStatus.className = "text-yellow-300 text-xs mb-4 font-bold animate-pulse";
@@ -741,11 +742,11 @@
                     ui.scoreStatus.innerText = "上傳成功！你名留青史了。";
                     ui.scoreStatus.className = "text-green-400 text-xs mb-4 font-bold";
                 } catch(e) {
-                    ui.scoreStatus.innerText = "上傳失敗: " + e.message;
+                    ui.scoreStatus.innerText = "上傳失敗";
                     ui.scoreStatus.className = "text-red-400 text-xs mb-4 font-bold";
                 }
             } else {
-                ui.scoreStatus.innerText = "伺服器未連線，分數未記錄。";
+                ui.scoreStatus.innerText = "未連線，分數未記錄。";
                 ui.scoreStatus.className = "text-slate-400 text-xs mb-4 font-bold";
             }
         }
@@ -760,6 +761,7 @@
             gameState = 'PLAYING'; 
         });
         
+        document.getElementById('changelog-modal').classList.add('hidden');
         document.getElementById('changelog-btn').addEventListener('click', () => { document.getElementById('changelog-modal').classList.remove('hidden'); });
         document.getElementById('close-changelog-btn').addEventListener('click', () => { document.getElementById('changelog-modal').classList.add('hidden'); });
         
