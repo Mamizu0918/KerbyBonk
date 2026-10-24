@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kirby Bonk! - 移動動畫流暢度微調</title>
+    <title>Kirby Bonk! - GIF 動畫流暢版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -118,8 +118,8 @@
     <div id="hud">
         <div>❤️ HP: <span id="hp-text">100/100</span></div>
         <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">動畫流暢度微調中</span></div>
-        <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動觀察動作</div>
+        <div>🔥 狀態: <span id="ability-text">GIF 動畫流暢模式</span></div>
+        <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動</div>
     </div>
     <div id="mobile-ui" class="mobile-ui">
         <div id="joystick-container"><div id="joystick-stick"></div></div>
@@ -137,26 +137,16 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     document.getElementById('mobile-ui').style.display = 'block';
 }
 
-const kirbySpriteSheet = new Image();
-kirbySpriteSheet.src = 'assets/kirby_sheet.png';
+// 📥 直接載入 GIF 動畫圖檔
+const kirbyGif = new Image();
+kirbyGif.src = 'assets/kirby_walk.gif'; // 請將你的 GIF 命名為 kirby_walk.gif 並放入 assets/ 資料夾
 
 const kirby = {
     x: 0, y: 0,
     speed: 4,
     vx: 0, vy: 0,
     facingRight: true,
-    
-    frameWidth: 28,   
-    frameHeight: 28,  
-    startX: 4,        
-    startY: 4,        
-    spacing: 4,       
-    displaySize: 56,  
-    
-    animTimer: 0,
-    currentFrame: 0,
-    totalWalkFrames: 4,
-    animationSpeed: 10, // 🔢 數字越大切換越慢（原本是 7，可改 10~12 試試看）
+    displaySize: 60, // 卡比顯示大小
 
     initPosition() {
         this.x = canvas.width / 2;
@@ -166,22 +156,11 @@ const kirby = {
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.x = Math.max(28, Math.min(canvas.width - 28, this.x));
-        this.y = Math.max(28, Math.min(canvas.height - 28, this.y));
+        this.x = Math.max(30, Math.min(canvas.width - 30, this.x));
+        this.y = Math.max(30, Math.min(canvas.height - 30, this.y));
 
         if (this.vx > 0) this.facingRight = true;
         if (this.vx < 0) this.facingRight = false;
-
-        // 當有在移動時才跑動畫
-        if (this.vx !== 0 || this.vy !== 0) {
-            this.animTimer++;
-            if (this.animTimer > this.animationSpeed) {
-                this.currentFrame = (this.currentFrame + 1) % this.totalWalkFrames;
-                this.animTimer = 0;
-            }
-        } else {
-            this.currentFrame = 0; // 靜止
-        }
     },
 
     draw() {
@@ -189,20 +168,18 @@ const kirby = {
         ctx.translate(this.x, this.y);
 
         if (!this.facingRight) {
-            ctx.scale(-1, 1);
+            ctx.scale(-1, 1); // 轉向時自動水平翻轉
         }
 
-        if (kirbySpriteSheet.complete && kirbySpriteSheet.naturalWidth !== 0) {
-            let srcX = this.startX + this.currentFrame * (this.frameWidth + this.spacing);
-            let srcY = this.startY;
-
+        if (kirbyGif.complete && kirbyGif.naturalWidth !== 0) {
+            // 直接畫出 GIF，瀏覽器會自動撥放動態影格！
             ctx.drawImage(
-                kirbySpriteSheet,
-                srcX, srcY, this.frameWidth, this.frameHeight,
+                kirbyGif,
                 -this.displaySize / 2, -this.displaySize / 2,
                 this.displaySize, this.displaySize
             );
         } else {
+            // 備用圓形
             ctx.beginPath();
             ctx.arc(0, 0, 24, 0, Math.PI * 2);
             ctx.fillStyle = '#ffb6c1';
@@ -223,7 +200,6 @@ resizeCanvas();
 
 const keys = {};
 window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
-window.removeEventListener('keyup', () => {});
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
 const base = document.getElementById('joystick-container');
@@ -267,6 +243,7 @@ function gameLoop() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // 草地背景
     ctx.fillStyle = '#5bb381';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#53a675';
