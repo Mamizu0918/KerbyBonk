@@ -3,521 +3,784 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>星之卡比：倖存者大冒險 (Kirby Survivors)</title>
-    <!-- Tailwind CSS CDN -->
+    <title>星之卡比：能力變身倖存者 (Kirby Copy Ability Survivors)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@500;700;900&display=swap');
 
-        * {
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-        }
-
-        body {
-            font-family: 'Fredoka One', 'Noto Sans TC', sans-serif;
-            background-color: #0f172a;
-            color: #ffffff;
-            overflow: hidden;
+        html, body {
+            width: 100%;
+            height: 100%;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            width: 100vw;
+            overflow: hidden;
+            background-color: #0b0818;
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
         }
 
-        #game-canvas {
+        .font-pixel {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* 高清 GBA 像素化 Crisp Canvas */
+        #gameCanvas {
             display: block;
-            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-            touch-action: none;
+            width: 100vw;
+            height: 100vh;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            image-rendering: -moz-crisp-edges;
         }
 
-        .custom-glass {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 2px solid rgba(255, 255, 255, 0.15);
-        }
-
-        .card-hover {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card-hover:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 12px 24px -6px rgba(236, 72, 153, 0.5);
-            border-color: #f472b6;
-        }
-
-        /* Virtual Joystick */
-        #joystick-container {
-            display: none;
+        /* 復古掃描線濾鏡 */
+        .scanlines::before {
+            content: " ";
+            display: block;
             position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+
+        /* 響應式搖桿 (置中靠下) */
+        #joystick-container {
+            position: absolute;
+            bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+            left: 50%;
+            transform: translateX(-50%);
+            width: clamp(100px, 22vw, 130px);
+            height: clamp(100px, 22vw, 130px);
             touch-action: none;
-            z-index: 50;
+            z-index: 40;
+        }
+
+        #joystick-base {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.2);
+            position: relative;
+            backdrop-filter: blur(4px);
         }
 
         #joystick-stick {
+            width: 42%;
+            height: 42%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff76a3, #e62060);
+            border: 2px solid #ffffff;
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 50px;
-            height: 50px;
-            background: rgba(244, 114, 182, 0.8);
-            border: 3px solid #ffffff;
-            border-radius: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 15px rgba(244, 114, 182, 0.6);
-            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.05s ease-out;
         }
 
-        /* Custom Scrollbar for Card Containers */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        .pixel-card {
+            background: #231b42;
+            border: 4px solid #ff76a3;
+            box-shadow: 6px 6px 0px #0e091f;
         }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+
+        .pixel-btn {
+            background: #ff5288;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 0 #b32050;
+            transition: all 0.1s;
+        }
+
+        .pixel-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #b32050;
+        }
+
+        .pixel-btn-secondary {
+            background: #4c1d95;
+            border: 2px solid #a855f7;
+            box-shadow: 0 3px 0 #2e1065;
+        }
+        .pixel-btn-secondary:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #2e1065;
+        }
+
+        /* 自訂捲軸滾動條 */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #110d24;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #ff76a3;
+            border-radius: 4px;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen relative overflow-hidden select-none">
+<body class="relative w-screen h-screen overflow-hidden bg-slate-950">
 
-    <!-- Game Canvas -->
-    <canvas id="game-canvas" class="w-full h-full absolute inset-0 z-0"></canvas>
-
-    <!-- Mobile Virtual Joystick -->
-    <div id="joystick-container">
-        <div id="joystick-stick"></div>
-    </div>
-
-    <!-- HUD Overlay -->
-    <div id="hud" class="absolute top-0 left-0 w-full p-4 pointer-events-none z-10 flex flex-col gap-2">
-        <!-- Top Info Bar -->
-        <div class="flex justify-between items-center max-w-5xl mx-auto w-full">
-            <!-- Level & EXP -->
-            <div class="flex items-center gap-3 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-2xl border border-pink-500/30 shadow-lg">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center font-bold text-lg text-white shadow-md border-2 border-white">
-                    <span id="hud-level">1</span>
-                </div>
-                <div class="flex flex-col w-32 md:w-48">
-                    <div class="flex justify-between text-xs font-bold text-pink-300 mb-1">
-                        <span>等級 <span id="hud-level-text">1</span></span>
-                        <span id="hud-exp-text">0 / 10</span>
-                    </div>
-                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-pink-900/50">
-                        <div id="hud-exp-bar" class="bg-gradient-to-r from-pink-500 to-rose-300 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
-                    </div>
-                </div>
+    <!-- 遊戲頂端 HUD 列 -->
+    <div id="game-hud" class="absolute top-2 left-2 right-2 z-20 flex justify-between items-center pointer-events-none text-white px-1 sm:px-4">
+        <!-- 角色職業與等級資訊 -->
+        <div class="flex items-center gap-2 sm:gap-3 bg-slate-900/90 border-2 border-pink-400 p-1.5 sm:p-2 rounded-lg shadow-lg pointer-events-auto">
+            <div id="class-avatar" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-pink-500 border-2 border-white flex items-center justify-center font-bold text-sm sm:text-lg shadow-inner">
+                <span id="player-level" class="font-pixel text-yellow-300">1</span>
             </div>
-
-            <!-- Timer & Kills -->
-            <div class="flex items-center gap-6 bg-slate-900/80 backdrop-blur px-6 py-2 rounded-2xl border border-slate-700/50 shadow-lg">
-                <div class="text-center">
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">存活時間</div>
-                    <div id="hud-timer" class="text-xl md:text-2xl font-black text-amber-400 tracking-wider">00:00</div>
+            <div class="flex flex-col w-24 sm:w-44">
+                <div class="flex justify-between text-[10px] sm:text-xs mb-0.5 font-bold">
+                    <span id="current-class-title" class="text-pink-300">一般形態</span>
+                    <span id="exp-text" class="text-yellow-300 text-[9px] sm:text-[10px]">0/10</span>
                 </div>
-                <div class="h-8 w-px bg-slate-700"></div>
-                <div class="text-center">
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">擊敗數</div>
-                    <div id="hud-kills" class="text-xl md:text-2xl font-black text-rose-400 tracking-wider">0</div>
-                </div>
-            </div>
-
-            <!-- Health Bar -->
-            <div class="flex items-center gap-3 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-2xl border border-emerald-500/30 shadow-lg">
-                <div class="flex flex-col w-32 md:w-48">
-                    <div class="flex justify-between text-xs font-bold text-emerald-300 mb-1">
-                        <span><i class="fa-solid fa-heart text-rose-500 mr-1"></i>體力 (HP)</span>
-                        <span id="hud-hp-text">100 / 100</span>
-                    </div>
-                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-emerald-900/50">
-                        <div id="hud-hp-bar" class="bg-gradient-to-r from-emerald-500 to-green-300 h-full rounded-full transition-all duration-200" style="width: 100%"></div>
-                    </div>
+                <div class="w-full bg-slate-800 h-2 sm:h-3 border border-pink-300/50 rounded-full overflow-hidden p-0.5">
+                    <div id="exp-bar" class="bg-gradient-to-r from-yellow-400 to-amber-300 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Active Ability Icons Bar -->
-        <div id="hud-abilities" class="flex justify-center gap-2 max-w-md mx-auto mt-1 pointer-events-none">
-            <!-- Active skill icons injected dynamically -->
+        <!-- 時間與擊退計數 -->
+        <div class="bg-slate-900/90 border-2 border-purple-400 px-3 sm:px-5 py-1 rounded-lg text-center shadow-lg">
+            <div id="game-time" class="font-pixel text-xs sm:text-2xl text-yellow-300 tracking-wider">00:00</div>
+            <div class="text-[9px] sm:text-[10px] text-purple-200 font-bold">擊退數: <span id="kill-count" class="text-white">0</span></div>
+        </div>
+
+        <!-- 玩家生命值條 -->
+        <div class="flex items-center gap-2 bg-slate-900/90 border-2 border-red-400 p-1.5 sm:p-2 rounded-lg shadow-lg">
+            <div class="flex flex-col w-20 sm:w-36">
+                <div class="flex justify-between text-[10px] sm:text-xs mb-0.5 font-bold">
+                    <span class="text-red-400">HP</span>
+                    <span id="hp-text" class="text-white text-[9px] sm:text-[10px]">100/100</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 sm:h-3 border border-red-400/50 rounded-full overflow-hidden p-0.5">
+                    <div id="hp-bar" class="bg-gradient-to-r from-red-500 to-pink-500 h-full rounded-full transition-all duration-200" style="width: 100%"></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- MAIN MENU OVERLAY -->
-    <div id="menu-overlay" class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-        <div class="max-w-md w-full custom-glass rounded-3xl p-8 text-center border border-pink-500/30 shadow-2xl relative overflow-hidden">
-            <!-- Decorative Glow Background -->
-            <div class="absolute -top-24 -left-24 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- 畫布與掃描線特效容器 -->
+    <div id="canvas-container" class="relative w-full h-full overflow-hidden scanlines">
+        <canvas id="gameCanvas"></canvas>
+    </div>
 
-            <div class="text-5xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-300 to-yellow-300 mb-2 drop-shadow-lg">
+    <!-- 手機端動態置中靠下虛擬搖桿 -->
+    <div id="joystick-container" class="md:hidden">
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
+        </div>
+    </div>
+
+    <!-- 主選單 / 開始畫面 -->
+    <div id="start-screen" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
+        <div class="pixel-card p-5 sm:p-8 rounded-2xl max-w-md w-full text-center border-4 border-pink-400 shadow-2xl relative">
+            
+            <!-- 版本號標籤 -->
+            <div class="absolute top-3 right-3 bg-pink-950 border border-pink-400 text-pink-300 font-pixel text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full shadow">
+                v1.3.0 GBA
+            </div>
+
+            <div class="text-4xl mb-1">⭐</div>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-yellow-200 mb-1 font-pixel tracking-tight">
                 星之卡比
+            </h1>
+            <p class="text-pink-400 text-xs sm:text-base font-bold mb-4 font-pixel">~ 能力變身倖存者 ~</p>
+            
+            <!-- 遊戲提示簡介 -->
+            <div class="bg-slate-900/90 p-3.5 rounded-xl text-left text-xs text-slate-300 mb-4 border border-purple-500/40 space-y-1.5">
+                <p class="text-yellow-300 font-bold">🎮 玩法說明：</p>
+                <p>• 吃地圖上的<b>「能力果實」</b>變身為利劍、烈火、迴旋鏢、電火花、光束或重錘卡比！</p>
+                <p>• 變身後升級可強化當前職業的專屬戰鬥數值。</p>
+                <p>• 操控：電腦 <span class="text-pink-300 font-mono">WASD / 方向鍵</span>，手機使用<span class="text-pink-300">底部搖桿</span>。</p>
             </div>
-            <div class="text-lg font-bold text-pink-200 uppercase tracking-widest mb-6">倖存者大冒險</div>
 
-            <div class="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/50 mb-6 text-left text-sm text-slate-300 space-y-2">
-                <div class="font-bold text-pink-300 text-base mb-1 border-b border-slate-700 pb-1 flex items-center gap-2">
-                    <i class="fa-solid fa-gamepad"></i> 操作說明
+            <!-- 操作按鈕組 -->
+            <div class="flex flex-col gap-2.5">
+                <button id="start-btn" class="pixel-btn w-full py-3 sm:py-3.5 text-base sm:text-lg font-bold text-white rounded-xl tracking-wider hover:bg-pink-400">
+                    開始冒險！
+                </button>
+                <button id="changelog-btn" class="pixel-btn-secondary w-full py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-purple-200 rounded-xl hover:text-white transition">
+                    📋 查看版本更新紀錄 (Changelog)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 更新日誌 Modal -->
+    <div id="changelog-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
+        <div class="pixel-card p-5 sm:p-6 rounded-2xl max-w-lg w-full border-4 border-purple-400 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-purple-500/40">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📜</span>
+                    <h2 class="text-lg sm:text-xl font-bold text-yellow-300 font-pixel">版本更新日誌</h2>
                 </div>
-                <p><span class="text-amber-300 font-bold">W A S D</span> 或 <span class="text-amber-300 font-bold">方向鍵</span>：控制移動</p>
-                <p><span class="text-amber-300 font-bold">智慧型手機 / 觸控板</span>：使用畫面左下角虛擬搖桿</p>
-                <p><span class="text-amber-300 font-bold">複製能力</span>：卡比將會自動對周圍敵人發動攻擊！</p>
+                <span class="text-xs text-pink-300 font-pixel bg-purple-950 border border-purple-400 px-2 py-0.5 rounded">v1.3.0</span>
             </div>
 
-            <button id="start-btn" class="w-full py-4 rounded-2xl font-black text-xl text-white bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 shadow-lg shadow-pink-500/30 transform transition active:scale-95 flex items-center justify-center gap-3 border-2 border-white/20">
-                <i class="fa-solid fa-play"></i> 開始遊戲
+            <!-- 日誌列表 (滾動區域) -->
+            <div class="custom-scroll overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-300 pr-1 text-left my-1">
+                <!-- v1.3.0 -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-pink-400/50">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-yellow-300 font-pixel">v1.3.0 (最新更新)</span>
+                        <span class="text-[10px] text-pink-400">2026.10</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-300 text-[11px] sm:text-xs">
+                        <li><b>圓形像素卡比重繪</b>：優化精靈圖案，繪製精確圓形正臉與可愛表情。</li>
+                        <li><b>原作複製能力果實變身系統</b>：吃下果實可變身為 Sword, Fire, Cutter, Spark, Beam, Hammer 卡比並戴上經典帽子。</li>
+                        <li><b>職業專屬升級強化</b>：升級時能個別針對當前職業強化威力、攻速、範圍或暴擊。</li>
+                        <li><b>登入 UI 版本號與更新日誌</b>：新增介面版本顯示與完整更新歷史面板。</li>
+                        <li><b>自適應螢幕解析度</b>：全動態響應式螢幕自適應，保持經典 Crisp GBA 畫質。</li>
+                    </ul>
+                </div>
+
+                <!-- v1.2.0 -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-purple-500/30">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-purple-300 font-pixel">v1.2.0</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px] sm:text-xs">
+                        <li><b>藍色攻擊範圍修正</b>：修復藍色圈圈攻擊範圍會誤綁角色的顯示 Bug。</li>
+                        <li><b>搖桿位置優化</b>：手機虛擬搖桿調整為底部置中，改善手持操作舒適度。</li>
+                        <li><b>GBA 復古視覺套用</b>：採用 GBA 經典調色盤與復古點陣風濾鏡。</li>
+                    </ul>
+                </div>
+
+                <!-- v1.1.0 -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-purple-500/30">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-purple-300 font-pixel">v1.1.0</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px] sm:text-xs">
+                        <li><b>繁體中文在地化</b>：遊戲 UI、招式技能名稱、提示對話全面繁體中文化。</li>
+                        <li><b>音效系統升級</b>：採用 Web Audio API 調校卡比招式與升級音效。</li>
+                    </ul>
+                </div>
+
+                <!-- v1.0.0 -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-purple-500/30">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-purple-300 font-pixel">v1.0.0</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px] sm:text-xs">
+                        <li><b>肉鴿生存玩法上線</b>：自動發射星彈攻擊、波次敵人群襲擊與經驗星星拾取。</li>
+                        <li><b>經典 Boss 登場</b>：加入帝帝帝大王 BOSS 與敵人波次機制。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button id="close-changelog-btn" class="pixel-btn w-full mt-3 py-2.5 text-xs sm:text-sm font-bold text-white rounded-xl">
+                返回主選單
             </button>
         </div>
     </div>
 
-    <!-- LEVEL UP / SKILL SELECTION MODAL -->
-    <div id="levelup-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4">
-        <div class="max-w-2xl w-full text-center">
-            <div class="inline-block px-6 py-2 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 font-black text-2xl text-slate-950 shadow-lg mb-2 transform -rotate-1 border-2 border-white">
-                🎉 等級提升 LEVEL UP!
+    <!-- 升級 / 變身選單 Modal -->
+    <div id="upgrade-modal" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
+        <div class="pixel-card p-5 sm:p-6 rounded-2xl max-w-lg w-full text-center border-4 border-yellow-400 shadow-2xl">
+            <div id="upgrade-modal-header">
+                <h2 class="text-xl sm:text-2xl font-bold text-yellow-300 font-pixel mb-1">能力提升！</h2>
+                <p class="text-slate-300 text-xs mb-4">請選擇一項能力來強化卡比：</p>
             </div>
-            <p class="text-pink-200 text-sm font-bold mb-6">請選擇一項能力來強化卡比！</p>
-
-            <!-- Cards Container -->
-            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Level Up Cards standard templates inserted here dynamically -->
+            
+            <div id="upgrade-options" class="grid grid-cols-1 gap-3">
+                <!-- 動態注入選項 -->
             </div>
         </div>
     </div>
 
-    <!-- GAME OVER / VICTORY MODAL -->
-    <div id="gameover-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
-        <div class="max-w-md w-full custom-glass rounded-3xl p-8 text-center border border-rose-500/40 shadow-2xl relative">
-            <div id="gameover-title" class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-red-500 mb-2">
-                遊戲結束 GAME OVER
+    <!-- 遊戲結束 Modal -->
+    <div id="game-over-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
+        <div class="pixel-card p-6 rounded-2xl max-w-md w-full text-center border-4 border-red-500">
+            <h2 class="text-2xl sm:text-3xl font-bold text-red-400 font-pixel mb-2">遊戲結束</h2>
+            <p class="text-slate-300 text-sm mb-4">卡比精力耗盡倒下了...</p>
+            <div class="bg-slate-900 p-4 rounded-xl mb-6 text-slate-300 space-y-2 text-xs sm:text-sm border border-slate-700 text-left">
+                <p>生存時間: <span id="final-time" class="text-yellow-300 font-bold">00:00</span></p>
+                <p>最終職業: <span id="final-class" class="text-pink-300 font-bold">一般卡比</span></p>
+                <p>擊退敵數: <span id="final-kills" class="text-pink-400 font-bold">0</span></p>
+                <p>最高等級: <span id="final-level" class="text-cyan-300 font-bold">1</span></p>
             </div>
-            <p id="gameover-subtitle" class="text-slate-300 text-sm mb-6">卡比力盡倒下了，再試一次吧！</p>
-
-            <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 mb-6 space-y-3">
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-slate-400 font-bold">堅持時間</span>
-                    <span id="final-time" class="text-amber-400 font-black text-lg">00:00</span>
-                </div>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-slate-400 font-bold">擊敗敵數</span>
-                    <span id="final-kills" class="text-rose-400 font-black text-lg">0</span>
-                </div>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-slate-400 font-bold">達到等級</span>
-                    <span id="final-level" class="text-pink-400 font-black text-lg">1</span>
-                </div>
-            </div>
-
-            <button id="restart-btn" class="w-full py-4 rounded-2xl font-black text-lg text-white bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg shadow-pink-500/30 transform transition active:scale-95 flex items-center justify-center gap-2 border border-white/20">
-                <i class="fa-solid fa-rotate-right"></i> 重新開始
+            <button id="restart-btn" class="pixel-btn w-full py-3 text-lg font-bold text-white rounded-xl">
+                重新挑戰
             </button>
         </div>
     </div>
 
-    <!-- JAVASCRIPT GAME LOGIC -->
+    <!-- 主遊戲腳本 -->
     <script>
-        // --- AUDIO SYNTHESIS (Web Audio API) ---
-        class SoundEffects {
+        // --- Web Audio 合成音效系統 ---
+        class SoundFX {
             constructor() {
                 this.ctx = null;
             }
-
             init() {
                 if (!this.ctx) {
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 }
-                if (this.ctx.state === 'suspended') {
-                    this.ctx.resume();
-                }
             }
-
-            playPop() {
+            playTone(freq, type, duration, vol=0.1) {
                 if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.08);
-            }
-
-            playGem() {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
-                osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.05); // E5
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.12);
-            }
-
-            playLevelUp() {
-                if (!this.ctx) return;
-                const notes = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
-                notes.forEach((freq, i) => {
+                try {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.08);
-                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime + i * 0.08);
-                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.08 + 0.2);
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
-                    osc.start(this.ctx.currentTime + i * 0.08);
-                    osc.stop(this.ctx.currentTime + i * 0.08 + 0.2);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+            star() {
+                this.playTone(880, 'sine', 0.08, 0.08);
+                setTimeout(() => this.playTone(1760, 'sine', 0.12, 0.08), 50);
+            }
+            transform() {
+                const notes = [440, 554, 659, 880, 1108];
+                notes.forEach((n, i) => {
+                    setTimeout(() => this.playTone(n, 'triangle', 0.15, 0.12), i * 60);
                 });
             }
-
-            playHit() {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-                osc.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.1);
+            hit() {
+                this.playTone(120, 'square', 0.08, 0.08);
             }
-
-            playChest() {
-                if (!this.ctx) return;
-                const notes = [523.25, 659.25, 783.99, 1046.50];
-                notes.forEach((freq, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.06);
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime + i * 0.06);
-                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.06 + 0.15);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start(this.ctx.currentTime + i * 0.06);
-                    osc.stop(this.ctx.currentTime + i * 0.06 + 0.15);
+            slash() {
+                this.playTone(520, 'triangle', 0.08, 0.08);
+            }
+            fire() {
+                this.playTone(180, 'sawtooth', 0.12, 0.06);
+            }
+            spark() {
+                this.playTone(950, 'square', 0.06, 0.05);
+            }
+            hammer() {
+                this.playTone(90, 'square', 0.18, 0.15);
+            }
+            levelUp() {
+                const notes = [523, 659, 783, 1046];
+                notes.forEach((n, i) => {
+                    setTimeout(() => this.playTone(n, 'sine', 0.12, 0.1), i * 70);
                 });
             }
         }
+        const sfx = new SoundFX();
 
-        const soundFX = new SoundEffects();
-
-        // --- SKILLS & COPY ABILITIES DEFINITIONS (Traditional Chinese) ---
-        const SKILL_DATABASE = {
-            sword: {
-                id: 'sword',
-                name: '利劍 (Sword)',
-                icon: 'fa-shield-halved',
-                color: '#3b82f6',
-                description: '揮舞銳利長劍，斬擊卡比正前方的所有敵人。',
-                level: 0,
-                maxLevel: 5,
-                cooldown: 50,
-                lastFired: 0
-            },
-            cutter: {
-                id: 'cutter',
-                name: '飛旋鏢 (Cutter)',
-                icon: 'fa-compact-disc',
-                color: '#f59e0b',
-                description: '擲出迴旋刀刃，會在穿透敵人後返回卡比手中。',
-                level: 0,
-                maxLevel: 5,
-                cooldown: 75,
-                lastFired: 0
-            },
-            fire: {
-                id: 'fire',
-                name: '烈火 (Fire)',
-                icon: 'fa-fire',
-                color: '#ef4444',
-                description: '圍繞卡比生成旋轉火球，持續燃燒靠近的敵人。',
-                level: 0,
-                maxLevel: 5,
-                cooldown: 0,
-                lastFired: 0
-            },
-            spark: {
-                id: 'spark',
-                name: '電光 (Spark)',
-                icon: 'fa-bolt',
-                color: '#eab308',
-                description: '定期向隨機敵人釋放連鎖閃電衝擊。',
-                level: 0,
-                maxLevel: 5,
-                cooldown: 90,
-                lastFired: 0
-            },
-            beam: {
-                id: 'beam',
-                name: '光束 (Beam)',
-                icon: 'fa-wand-magic-sparkles',
-                color: '#a855f7',
-                description: '釋放能量波鞭，掃過周圍敵人群。',
-                level: 0,
-                maxLevel: 5,
-                cooldown: 110,
-                lastFired: 0
-            },
-            speed: {
-                id: 'speed',
-                name: '輕盈鞋子 (Speed)',
-                icon: 'fa-shoe-prints',
-                color: '#10b981',
-                description: '提升卡比的移動速度 +15%。',
-                passive: true,
-                level: 0,
-                maxLevel: 5
-            },
-            maxhp: {
-                id: 'maxhp',
-                name: '終極蕃茄 (Maxim Tomato)',
-                icon: 'fa-apple-whole',
-                color: '#f43f5e',
-                description: '提升卡比最大體力值 +20，並立即補滿血量。',
-                passive: true,
-                level: 0,
-                maxLevel: 5
-            },
-            magnet: {
-                id: 'magnet',
-                name: '吸引星之卡 (Magnet)',
-                icon: 'fa-magnet',
-                color: '#06b6d4',
-                description: '擴大經驗星與寶物的拾取範圍 +30%。',
-                passive: true,
-                level: 0,
-                maxLevel: 5
-            }
-        };
-
-        // --- GAME ENGINE & SETUP ---
-        const canvas = document.getElementById('game-canvas');
+        // --- 全螢幕自適應畫布設定 ---
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        const VIRTUAL_HEIGHT = 320; // GBA 垂直解析度基準
+        let viewWidth = 480;
+        let viewHeight = 320;
+        let scaleFactor = 1;
+
         function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const windowW = window.innerWidth;
+            const windowH = window.innerHeight;
+
+            canvas.width = windowW;
+            canvas.height = windowH;
+
+            scaleFactor = windowH / VIRTUAL_HEIGHT;
+            viewWidth = windowW / scaleFactor;
+            viewHeight = VIRTUAL_HEIGHT;
+
+            ctx.imageSmoothingEnabled = false;
         }
+
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Game State Variables
-        let gameState = 'MENU'; // MENU, PLAYING, LEVELUP, GAMEOVER
+        // --- 圓形 24x24 像素精靈圖繪製器 ---
+        function createPixelSprite(width, height, drawFn) {
+            const offscreen = document.createElement('canvas');
+            offscreen.width = width;
+            offscreen.height = height;
+            const oCtx = offscreen.getContext('2d');
+            oCtx.imageSmoothingEnabled = false;
+            drawFn(oCtx);
+            return offscreen;
+        }
+
+        const Sprites = {};
+
+        function generateSprites() {
+            // 完美圓形卡比身體繪製函式
+            const drawBaseKirbyBody = (c) => {
+                // 深紅雙腳
+                c.fillStyle = '#dc2626';
+                c.fillRect(3, 18, 7, 5);
+                c.fillRect(14, 18, 7, 5);
+                c.fillStyle = '#991b1b';
+                c.fillRect(4, 21, 5, 2);
+                c.fillRect(15, 21, 5, 2);
+
+                // 正圓形粉紅粉嫩身體
+                c.fillStyle = '#ff8cb3';
+                c.fillRect(6, 3, 12, 16);
+                c.fillRect(4, 5, 16, 12);
+                c.fillRect(3, 6, 18, 10);
+
+                // 高光
+                c.fillStyle = '#ffb3cc';
+                c.fillRect(7, 4, 4, 3);
+
+                // 卡比長橢圓雙眼
+                c.fillStyle = '#0f172a';
+                c.fillRect(8, 7, 3, 6);
+                c.fillRect(14, 7, 3, 6);
+
+                c.fillStyle = '#2563eb';
+                c.fillRect(9, 9, 2, 4);
+                c.fillRect(15, 9, 2, 4);
+
+                c.fillStyle = '#ffffff';
+                c.fillRect(9, 7, 2, 2);
+                c.fillRect(15, 7, 2, 2);
+
+                // 粉紅腮紅
+                c.fillStyle = '#ff3377';
+                c.fillRect(5, 11, 3, 2);
+                c.fillRect(16, 11, 3, 2);
+
+                // 微笑小嘴
+                c.fillStyle = '#991b1b';
+                c.fillRect(11, 12, 3, 2);
+            };
+
+            // 1. 一般卡比
+            Sprites.kirbyNORMAL = createPixelSprite(24, 24, drawBaseKirbyBody);
+
+            // 2. 利劍卡比
+            Sprites.kirbySWORD = createPixelSprite(24, 24, (c) => {
+                drawBaseKirbyBody(c);
+                c.fillStyle = '#16a34a';
+                c.fillRect(4, 0, 16, 5);
+                c.fillRect(2, 2, 8, 5);
+                c.fillRect(0, 4, 5, 4);
+                c.fillStyle = '#facc15';
+                c.fillRect(5, 4, 14, 2);
+                c.fillStyle = '#ef4444';
+                c.fillRect(11, 2, 2, 2);
+            });
+
+            // 3. 烈火卡比
+            Sprites.kirbyFIRE = createPixelSprite(24, 24, (c) => {
+                drawBaseKirbyBody(c);
+                c.fillStyle = '#ea580c';
+                c.fillRect(6, 0, 12, 5);
+                c.fillStyle = '#f97316';
+                c.fillRect(8, -1, 3, 4); c.fillRect(13, -1, 3, 4);
+                c.fillStyle = '#facc15';
+                c.fillRect(10, 2, 4, 3);
+            });
+
+            // 4. 迴旋鏢卡比
+            Sprites.kirbyCUTTER = createPixelSprite(24, 24, (c) => {
+                drawBaseKirbyBody(c);
+                c.fillStyle = '#eab308';
+                c.fillRect(4, 2, 16, 4);
+                c.fillStyle = '#0284c7';
+                c.fillRect(8, 3, 8, 3);
+            });
+
+            // 5. 電火花卡比
+            Sprites.kirbySPARK = createPixelSprite(24, 24, (c) => {
+                drawBaseKirbyBody(c);
+                c.fillStyle = '#38bdf8';
+                c.fillRect(5, 1, 14, 4);
+                c.fillStyle = '#facc15';
+                c.fillRect(7, -2, 3, 4);
+                c.fillRect(14, -2, 3, 4);
+                c.fillRect(11, -3, 2, 5);
+            });
+
+            // 6. 光束卡比
+            Sprites.kirbyBEAM = createPixelSprite(24, 24, (c) => {
+                drawBaseKirbyBody(c);
+                c.fillStyle = '#a855f7';
+                c.fillRect(5, 1, 14, 4);
+                c.fillStyle = '#f43f5e';
+                c.fillRect(3, -2, 6, 4);
+                c.fillStyle = '#facc15';
+                c.fillRect(15, -2, 6, 4);
+            });
+
+            // 7. 重錘卡比
+            Sprites.kirbyHAMMER = createPixelSprite(24, 24, (c) => {
+                drawBaseKirbyBody(c);
+                c.fillStyle = '#b91c1c';
+                c.fillRect(4, 2, 16, 4);
+                c.fillStyle = '#facc15';
+                c.fillRect(9, 1, 6, 5);
+                c.fillStyle = '#1e3a8a';
+                c.fillRect(11, 2, 2, 3);
+            });
+
+            // --- 敵人精靈 ---
+            Sprites.waddleDee = createPixelSprite(20, 20, (c) => {
+                c.fillStyle = '#f97316';
+                c.fillRect(4, 2, 12, 16); c.fillRect(2, 4, 16, 12);
+                c.fillStyle = '#fed7aa';
+                c.fillRect(5, 5, 10, 11);
+                c.fillStyle = '#1e293b';
+                c.fillRect(7, 7, 2, 4); c.fillRect(11, 7, 2, 4);
+                c.fillStyle = '#ea580c';
+                c.fillRect(2, 15, 5, 4); c.fillRect(13, 15, 5, 4);
+            });
+
+            Sprites.gordo = createPixelSprite(20, 20, (c) => {
+                c.fillStyle = '#334155';
+                c.fillRect(4, 4, 12, 12);
+                c.fillStyle = '#94a3b8';
+                c.fillRect(9, 0, 2, 4); c.fillRect(9, 16, 2, 4);
+                c.fillRect(0, 9, 4, 2); c.fillRect(16, 9, 4, 2);
+                c.fillStyle = '#ffffff';
+                c.fillRect(6, 7, 3, 4); c.fillRect(11, 7, 3, 4);
+                c.fillStyle = '#000000';
+                c.fillRect(7, 8, 2, 3); c.fillRect(11, 8, 2, 3);
+            });
+
+            Sprites.scarfy = createPixelSprite(20, 20, (c) => {
+                c.fillStyle = '#eab308';
+                c.fillRect(4, 4, 12, 12);
+                c.fillStyle = '#ffffff';
+                c.fillRect(6, 6, 8, 6);
+                c.fillStyle = '#dc2626';
+                c.fillRect(8, 8, 4, 4);
+            });
+
+            Sprites.dedede = createPixelSprite(36, 36, (c) => {
+                c.fillStyle = '#1d4ed8';
+                c.fillRect(6, 8, 24, 24);
+                c.fillStyle = '#ffffff';
+                c.fillRect(4, 10, 28, 5); c.fillRect(4, 26, 28, 5);
+                c.fillStyle = '#eab308';
+                c.fillRect(10, 14, 16, 12);
+                c.fillStyle = '#b91c1c';
+                c.fillRect(10, 2, 16, 7);
+                c.fillStyle = '#ffffff';
+                c.fillRect(16, -1, 4, 4);
+            });
+
+            Sprites.star = createPixelSprite(10, 10, (c) => {
+                c.fillStyle = '#facc15';
+                c.fillRect(4, 0, 2, 10); c.fillRect(0, 4, 10, 2);
+                c.fillRect(2, 2, 6, 6);
+            });
+
+            ['SWORD', 'FIRE', 'CUTTER', 'SPARK', 'BEAM', 'HAMMER'].forEach(type => {
+                Sprites['fruit_' + type] = createPixelSprite(16, 16, (c) => {
+                    c.fillStyle = '#ef4444';
+                    c.fillRect(3, 3, 10, 11); c.fillRect(2, 5, 12, 7);
+                    c.fillStyle = '#22c55e';
+                    c.fillRect(7, 0, 3, 3);
+                    c.fillStyle = '#facc15';
+                    c.fillRect(6, 6, 4, 4);
+                });
+            });
+        }
+        generateSprites();
+
+        // --- 職業能力系統定義 ---
+        const CLASSES = {
+            NORMAL: {
+                id: 'NORMAL',
+                name: '一般卡比',
+                title: '一般形態',
+                desc: '自動發射空氣星彈攻擊周圍敵群',
+                color: '#ff8cb3',
+                stats: { cd: 40, damage: 15, range: 120, speed: 3.5 }
+            },
+            SWORD: {
+                id: 'SWORD',
+                name: '利劍卡比',
+                title: '利劍形態',
+                desc: '揮舞銳利劍氣進行近戰連續切斬',
+                color: '#22c55e',
+                stats: { cd: 32, damage: 22, range: 45 }
+            },
+            FIRE: {
+                id: 'FIRE',
+                name: '烈火卡比',
+                title: '烈火形態',
+                desc: '圍繞炙熱烈焰火焰圈並噴射火球',
+                color: '#f97316',
+                stats: { cd: 20, damage: 8, auraRadius: 40 }
+            },
+            CUTTER: {
+                id: 'CUTTER',
+                name: '迴旋鏢卡比',
+                title: '迴旋鏢形態',
+                desc: '投擲高速穿透敵人並返回的迴旋斬擊',
+                color: '#eab308',
+                stats: { cd: 50, damage: 18, speed: 4.5 }
+            },
+            SPARK: {
+                id: 'SPARK',
+                name: '電火花卡比',
+                title: '電火花形態',
+                desc: '高壓電擊陣，瞬間鏈狀電擊多個敵人',
+                color: '#38bdf8',
+                stats: { cd: 70, damage: 30, chainTargets: 3 }
+            },
+            BEAM: {
+                id: 'BEAM',
+                name: '光束卡比',
+                title: '光束形態',
+                desc: '揮舞光束鞭橫掃前方廣闊扇形區域',
+                color: '#a855f7',
+                stats: { cd: 60, damage: 20, range: 60 }
+            },
+            HAMMER: {
+                id: 'HAMMER',
+                name: '重錘卡比',
+                title: '重錘形態',
+                desc: '重鎚砸地引發震波，造成強烈擊退與暴擊',
+                color: '#b91c1c',
+                stats: { cd: 80, damage: 50, smashRadius: 50, critChance: 0.25 }
+            }
+        };
+
+        // --- 遊戲全域狀態 ---
+        let gameState = 'START';
         let gameTime = 0;
         let killCount = 0;
         let frameCount = 0;
 
-        // Player (Kirby) Object
         const player = {
             x: 0,
             y: 0,
-            radius: 20,
-            speed: 3.5,
+            vx: 0,
+            vy: 0,
+            speed: 2.2,
             hp: 100,
             maxHp: 100,
             level: 1,
             exp: 0,
             nextExp: 10,
-            facingRight: true,
-            skills: {},
-            pickupRadius: 70
+            facing: 1,
+            size: 20,
+            currentClass: 'NORMAL',
+            classLevel: 1,
+            attackTimer: 0
         };
 
-        // Inputs
-        const keys = {};
-        const joystick = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
-
-        // Game Entities Arrays
         let enemies = [];
         let projectiles = [];
-        let gems = [];
-        let particles = [];
+        let expStars = [];
+        let fruits = [];
+        let particleEffects = [];
         let floatingTexts = [];
+        let screenShake = { x: 0, y: 0, duration: 0, intensity: 0 };
 
-        // Camera Offset
-        let cameraX = 0;
-        let cameraY = 0;
-
-        // Key Listeners
+        // 鍵盤操控
+        const keys = {};
         window.addEventListener('keydown', e => keys[e.code] = true);
         window.addEventListener('keyup', e => keys[e.code] = false);
 
-        // Virtual Joystick setup for Mobile Touch
-        const joystickContainer = document.getElementById('joystick-container');
-        const joystickStick = document.getElementById('joystick-stick');
+        // 虛擬搖桿
+        const joyContainer = document.getElementById('joystick-container');
+        const joyStick = document.getElementById('joystick-stick');
+        let joyActive = false;
+        let joyVector = { x: 0, y: 0 };
 
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            joystickContainer.style.display = 'block';
-        }
-
-        joystickContainer.addEventListener('touchstart', e => {
+        function handleTouch(e) {
+            if (!joyActive) return;
             const touch = e.touches[0];
-            const rect = joystickContainer.getBoundingClientRect();
-            joystick.active = true;
-            joystick.startX = rect.left + rect.width / 2;
-            joystick.startY = rect.top + rect.height / 2;
-            updateJoystick(touch.clientX, touch.clientY);
-        });
+            const rect = joyContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
 
-        window.addEventListener('touchmove', e => {
-            if (!joystick.active) return;
-            const touch = e.touches[0];
-            updateJoystick(touch.clientX, touch.clientY);
-        });
-
-        window.addEventListener('touchend', () => {
-            joystick.active = false;
-            joystick.moveX = 0;
-            joystick.moveY = 0;
-            joystickStick.style.transform = `translate(-50%, -50%)`;
-        });
-
-        function updateJoystick(clientX, clientY) {
-            const dx = clientX - joystick.startX;
-            const dy = clientY - joystick.startY;
+            let dx = touch.clientX - centerX;
+            let dy = touch.clientY - centerY;
             const dist = Math.hypot(dx, dy);
-            const maxDist = 45;
+            const maxRadius = rect.width / 2;
 
-            const angle = Math.atan2(dy, dx);
-            const clampedDist = Math.min(dist, maxDist);
+            if (dist > maxRadius) {
+                dx = (dx / dist) * maxRadius;
+                dy = (dy / dist) * maxRadius;
+            }
 
-            const x = Math.cos(angle) * clampedDist;
-            const y = Math.sin(angle) * clampedDist;
-
-            joystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-
-            joystick.moveX = (x / maxDist);
-            joystick.moveY = (y / maxDist);
+            joyStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            joyVector.x = dx / maxRadius;
+            joyVector.y = dy / maxRadius;
         }
 
-        // --- GAME INIT & RESTART ---
-        function startGame() {
-            soundFX.init();
-            gameState = 'PLAYING';
+        joyContainer.addEventListener('touchstart', (e) => {
+            joyActive = true;
+            handleTouch(e);
+        });
+        window.addEventListener('touchmove', (e) => { if (joyActive) handleTouch(e); });
+        window.addEventListener('touchend', () => {
+            joyActive = false;
+            joyVector = { x: 0, y: 0 };
+            joyStick.style.transform = 'translate(-50%, -50%)';
+        });
 
-            // Reset Player
+        // --- VFX 輔助函式 ---
+        function triggerShake(intensity, duration) {
+            screenShake.intensity = intensity;
+            screenShake.duration = duration;
+        }
+
+        function showDamage(x, y, amount, isCrit=false) {
+            floatingTexts.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y - 10,
+                text: Math.ceil(amount),
+                life: 35, maxLife: 35,
+                isCrit, vy: -1.5 - Math.random()
+            });
+        }
+
+        function createHitSpark(x, y, color='#fde047') {
+            // 十字星芒火花特效
+            for(let i=0; i<4; i++) {
+                const angle = (Math.PI / 2 * i) + (Math.random() * 0.4 - 0.2);
+                particleEffects.push({
+                    type: 'HIT_SPARK',
+                    x, y,
+                    vx: Math.cos(angle) * (2 + Math.random() * 2),
+                    vy: Math.sin(angle) * (2 + Math.random() * 2),
+                    life: 12, maxLife: 12, color
+                });
+            }
+        }
+
+        // 變身邏輯
+        function transformToClass(classId) {
+            player.currentClass = classId;
+            player.classLevel = 1;
+            const cInfo = CLASSES[classId];
+            sfx.transform();
+            triggerShake(4, 10);
+
+            for (let i = 0; i < 16; i++) {
+                const angle = (Math.PI * 2 / 16) * i;
+                particleEffects.push({
+                    type: 'TRANSFORM_RING',
+                    x: player.x,
+                    y: player.y,
+                    vx: Math.cos(angle) * 3,
+                    vy: Math.sin(angle) * 3,
+                    color: cInfo.color,
+                    life: 25
+                });
+            }
+            updateHUD();
+        }
+
+        function initGame() {
             player.x = 0;
             player.y = 0;
             player.hp = 100;
@@ -525,726 +788,721 @@
             player.level = 1;
             player.exp = 0;
             player.nextExp = 10;
-            player.speed = 3.5;
-            player.pickupRadius = 70;
-            player.skills = {};
-
-            // Initial Starter Ability: Sword (利劍)
-            player.skills['sword'] = { ...SKILL_DATABASE['sword'], level: 1 };
-
-            // Clear Arrays
-            enemies = [];
-            projectiles = [];
-            gems = [];
-            particles = [];
-            floatingTexts = [];
+            player.currentClass = 'NORMAL';
+            player.classLevel = 1;
+            player.attackTimer = 0;
 
             gameTime = 0;
             killCount = 0;
             frameCount = 0;
 
-            document.getElementById('menu-overlay').classList.add('hidden');
-            document.getElementById('gameover-modal').classList.add('hidden');
-            document.getElementById('levelup-modal').classList.add('hidden');
+            enemies = [];
+            projectiles = [];
+            expStars = [];
+            fruits = [];
+            particleEffects = [];
+            floatingTexts = [];
+            screenShake = { x: 0, y: 0, duration: 0, intensity: 0 };
 
             updateHUD();
         }
 
-        // --- ENEMY SPAWNING ---
-        function spawnEnemy() {
-            if (enemies.length > 250) return;
-
-            // Spawn in a circle around player outside viewport
-            const angle = Math.random() * Math.PI * 2;
-            const distance = Math.max(canvas.width, canvas.height) / 2 + 50;
-
-            const x = player.x + Math.cos(angle) * distance;
-            const y = player.y + Math.sin(angle) * distance;
-
-            // Types: 0: Waddle Dee, 1: Bronto Burt, 2: Gordo, 3: King Dedede / Boss
-            let type = 'waddle_dee';
-            let hp = 15 + Math.floor(gameTime * 0.5);
-            let speed = 1.2 + Math.random() * 0.4;
-            let radius = 16;
-            let color = '#f97316'; // Orange Waddle Dee
-            let expVal = 1;
-
-            const rand = Math.random();
-            if (gameTime > 30 && rand > 0.6) {
-                type = 'bronto_burt'; // Fast flying
-                hp = 10 + Math.floor(gameTime * 0.4);
-                speed = 2.2;
-                radius = 14;
-                color = '#ec4899';
-                expVal = 2;
-            } else if (gameTime > 60 && rand > 0.85) {
-                type = 'gordo'; // Spiky tank
-                hp = 45 + Math.floor(gameTime * 1.2);
-                speed = 0.8;
-                radius = 22;
-                color = '#475569';
-                expVal = 5;
-            } else if (frameCount % 1800 === 0 && gameTime > 40) {
-                // Boss: King Dedede (帝帝帝大王) or Meta Knight (魅塔騎士)
-                type = 'king_dedede';
-                hp = 350 + gameTime * 10;
-                speed = 1.0;
-                radius = 36;
-                color = '#dc2626';
-                expVal = 30;
+        function checkLevelUp() {
+            if (player.exp >= player.nextExp) {
+                player.exp -= player.nextExp;
+                player.level++;
+                player.nextExp = Math.floor(player.nextExp * 1.35);
+                sfx.levelUp();
+                showUpgradeModal();
             }
-
-            enemies.push({ x, y, radius, hp, maxHp: hp, speed, color, type, expVal, hitTimer: 0 });
+            updateHUD();
         }
 
-        // --- SKILL / ATTACK SYSTEM ---
-        function updateSkills() {
-            Object.keys(player.skills).forEach(skillId => {
-                const sk = player.skills[skillId];
-                if (sk.passive) return;
+        function showUpgradeModal() {
+            gameState = 'UPGRADE';
+            const modal = document.getElementById('upgrade-modal');
+            const optionsContainer = document.getElementById('upgrade-options');
+            const header = document.getElementById('upgrade-modal-header');
+            optionsContainer.innerHTML = '';
 
-                sk.lastFired++;
-                if (sk.lastFired >= Math.max(15, sk.cooldown - (sk.level - 1) * 8)) {
-                    sk.lastFired = 0;
-                    activateSkill(sk);
-                }
-            });
-        }
-
-        function activateSkill(sk) {
-            if (sk.id === 'sword') {
-                // Sword slash attack front of Kirby
-                const slashDir = player.facingRight ? 1 : -1;
-                projectiles.push({
-                    type: 'sword_slash',
-                    x: player.x + slashDir * 25,
-                    y: player.y,
-                    radius: 35 + sk.level * 6,
-                    damage: 20 + sk.level * 8,
-                    life: 10,
-                    maxLife: 10,
-                    dir: slashDir,
-                    color: sk.color
-                });
-                soundFX.playPop();
-            } else if (sk.id === 'cutter') {
-                // Cutter boomerangs
-                const count = 1 + Math.floor(sk.level / 2);
-                for (let i = 0; i < count; i++) {
-                    const angle = (player.facingRight ? 0 : Math.PI) + (i - (count - 1) / 2) * 0.3;
-                    projectiles.push({
-                        type: 'cutter',
-                        x: player.x,
-                        y: player.y,
-                        vx: Math.cos(angle) * 7,
-                        vy: Math.sin(angle) * 7,
-                        radius: 12,
-                        damage: 15 + sk.level * 5,
-                        life: 80,
-                        maxLife: 80,
-                        color: sk.color,
-                        pierce: 99
-                    });
-                }
-                soundFX.playPop();
-            } else if (sk.id === 'spark') {
-                // Spark chain targeting nearest enemy
-                const nearest = getNearestEnemy();
-                if (nearest) {
-                    projectiles.push({
-                        type: 'spark_lightning',
-                        startX: player.x,
-                        startY: player.y,
-                        targetX: nearest.x,
-                        targetY: nearest.y,
-                        damage: 25 + sk.level * 10,
-                        life: 12,
-                        color: sk.color
-                    });
-                    nearest.hp -= (25 + sk.level * 10);
-                    nearest.hitTimer = 6;
-                    createFloatingText(`-${25 + sk.level * 10}`, nearest.x, nearest.y, '#facc15');
-                    soundFX.playHit();
-                }
-            } else if (sk.id === 'beam') {
-                // Beam whip arc
-                projectiles.push({
-                    type: 'beam_whip',
-                    x: player.x,
-                    y: player.y,
-                    angle: player.facingRight ? 0 : Math.PI,
-                    radius: 75 + sk.level * 10,
-                    damage: 12 + sk.level * 4,
-                    life: 15,
-                    maxLife: 15,
-                    color: sk.color
-                });
-                soundFX.playPop();
-            }
-        }
-
-        function getNearestEnemy() {
-            let closest = null;
-            let minDist = Infinity;
-            enemies.forEach(e => {
-                const dist = Math.hypot(e.x - player.x, e.y - player.y);
-                if (dist < minDist && dist < 350) {
-                    minDist = dist;
-                    closest = e;
-                }
-            });
-            return closest;
-        }
-
-        // --- FLOATING DAMAGE TEXTS ---
-        function createFloatingText(text, x, y, color = '#ffffff') {
-            floatingTexts.push({
-                text, x, y, color, life: 30, maxLife: 30, vy: -1.2
-            });
-        }
-
-        // --- LEVEL UP & CARD SELECTION MECHANICS ---
-        function triggerLevelUp() {
-            gameState = 'LEVELUP';
-            soundFX.playLevelUp();
-
-            const container = document.getElementById('cards-container');
-            container.innerHTML = '';
-
-            // Generate 3 random upgrade options
-            const availableSkills = Object.keys(SKILL_DATABASE).filter(id => {
-                const sk = player.skills[id];
-                return !sk || sk.level < SKILL_DATABASE[id].maxLevel;
-            });
-
-            // Shuffle
-            const choices = availableSkills.sort(() => 0.5 - Math.random()).slice(0, 3);
-
-            choices.forEach(id => {
-                const dbSk = SKILL_DATABASE[id];
-                const currentSk = player.skills[id];
-                const currentLvl = currentSk ? currentSk.level : 0;
-
-                const card = document.createElement('div');
-                card.className = 'custom-glass card-hover rounded-2xl p-5 cursor-pointer flex flex-col justify-between items-center text-center relative border border-slate-700/60 bg-slate-900/90';
-
-                card.innerHTML = `
-                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white mb-3 shadow-md" style="background: ${dbSk.color}">
-                        <i class="fa-solid ${dbSk.icon}"></i>
-                    </div>
-                    <div class="font-black text-lg text-white mb-1">${dbSk.name}</div>
-                    <div class="text-xs font-bold text-amber-400 mb-2">${currentLvl === 0 ? '✨ 解鎖新技能！' : `等級 LV ${currentLvl} ➜ ${currentLvl + 1}`}</div>
-                    <p class="text-xs text-slate-300 mb-4 leading-relaxed">${dbSk.description}</p>
-                    <button class="w-full py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 font-bold text-xs text-white shadow-md hover:brightness-110">
-                        ${currentLvl === 0 ? '獲得能力' : '升級能力'}
-                    </button>
+            if (player.currentClass === 'NORMAL') {
+                header.innerHTML = `
+                    <h2 class="text-xl sm:text-2xl font-bold text-yellow-300 font-pixel mb-1">獲得能力精華！</h2>
+                    <p class="text-slate-300 text-xs mb-4">選擇一顆果實讓卡比變身為專屬職業：</p>
                 `;
 
-                card.onclick = () => selectUpgrade(id);
-                container.appendChild(card);
-            });
+                const availClasses = ['SWORD', 'FIRE', 'CUTTER', 'SPARK', 'BEAM', 'HAMMER'];
+                const choices = availClasses.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-            document.getElementById('levelup-modal').classList.remove('hidden');
-        }
-
-        function selectUpgrade(id) {
-            if (!player.skills[id]) {
-                player.skills[id] = { ...SKILL_DATABASE[id], level: 1 };
+                choices.forEach(cKey => {
+                    const cData = CLASSES[cKey];
+                    const btn = document.createElement('button');
+                    btn.className = 'bg-slate-800 border-2 border-pink-400 hover:border-yellow-300 p-3 rounded-xl flex justify-between items-center text-left transition-all hover:bg-slate-700';
+                    btn.innerHTML = `
+                        <div>
+                            <div class="font-bold text-pink-300 text-xs sm:text-sm">${cData.name}</div>
+                            <div class="text-[10px] sm:text-xs text-slate-300 mt-0.5">${cData.desc}</div>
+                        </div>
+                        <span class="text-yellow-300 font-pixel text-[10px] sm:text-xs ml-2">變身！</span>
+                    `;
+                    btn.onclick = () => {
+                        transformToClass(cKey);
+                        modal.classList.add('hidden');
+                        gameState = 'PLAYING';
+                    };
+                    optionsContainer.appendChild(btn);
+                });
             } else {
-                player.skills[id].level++;
+                const curClassData = CLASSES[player.currentClass];
+                header.innerHTML = `
+                    <h2 class="text-xl sm:text-2xl font-bold text-yellow-300 font-pixel mb-1">${curClassData.name} 強化！</h2>
+                    <p class="text-slate-300 text-xs mb-4">當前能力等級 LV.${player.classLevel}，選擇強化屬性：</p>
+                `;
+
+                const upgrades = [
+                    { title: '威力提升', desc: '增加基礎攻擊傷害 +25%', apply: () => { curClassData.stats.damage *= 1.25; } },
+                    { title: '攻速加快', desc: '縮短技能冷卻時間 -15%', apply: () => { curClassData.stats.cd = Math.max(10, curClassData.stats.cd * 0.85); } },
+                    { title: '攻擊範圍擴大', desc: '增加攻擊覆蓋與打擊範圍 +20%', apply: () => { 
+                        if(curClassData.stats.range) curClassData.stats.range *= 1.2;
+                        if(curClassData.stats.auraRadius) curClassData.stats.auraRadius *= 1.2;
+                        if(curClassData.stats.smashRadius) curClassData.stats.smashRadius *= 1.2;
+                    } },
+                    { title: '體力回復', desc: '立即回復 35% HP 並提高移動速度', apply: () => { player.hp = Math.min(player.maxHp, player.hp + 35); player.speed += 0.2; } }
+                ];
+
+                const choices = upgrades.sort(() => 0.5 - Math.random()).slice(0, 3);
+                choices.forEach(up => {
+                    const btn = document.createElement('button');
+                    btn.className = 'bg-slate-800 border-2 border-purple-400 hover:border-yellow-300 p-3 rounded-xl flex justify-between items-center text-left transition-all hover:bg-slate-700';
+                    btn.innerHTML = `
+                        <div>
+                            <div class="font-bold text-yellow-300 text-xs sm:text-sm">${up.title}</div>
+                            <div class="text-[10px] sm:text-xs text-slate-300 mt-0.5">${up.desc}</div>
+                        </div>
+                        <span class="text-pink-300 font-pixel text-[10px] sm:text-xs ml-2">強化</span>
+                    `;
+                    btn.onclick = () => {
+                        up.apply();
+                        player.classLevel++;
+                        modal.classList.add('hidden');
+                        gameState = 'PLAYING';
+                    };
+                    optionsContainer.appendChild(btn);
+                });
             }
 
-            // Apply passive bonuses immediately
-            if (id === 'speed') {
-                player.speed += 0.5;
-            } else if (id === 'maxhp') {
-                player.maxHp += 20;
-                player.hp = player.maxHp; // Full heal on Max HP increase
-            } else if (id === 'magnet') {
-                player.pickupRadius += 30;
-            }
-
-            document.getElementById('levelup-modal').classList.add('hidden');
-            gameState = 'PLAYING';
-            updateHUD();
+            modal.classList.remove('hidden');
         }
 
-        // --- MAIN UPDATE LOOP ---
+        function updateHUD() {
+            document.getElementById('player-level').innerText = player.level;
+            document.getElementById('current-class-title').innerText = `${CLASSES[player.currentClass].title} Lv.${player.classLevel}`;
+            document.getElementById('exp-text').innerText = `${player.exp}/${player.nextExp}`;
+            document.getElementById('exp-bar').style.width = `${Math.min(100, (player.exp / player.nextExp) * 100)}%`;
+
+            document.getElementById('hp-text').innerText = `${Math.max(0, Math.ceil(player.hp))}/${player.maxHp}`;
+            document.getElementById('hp-bar').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
+
+            const mins = Math.floor(gameTime / 60).toString().padStart(2, '0');
+            const secs = Math.floor(gameTime % 60).toString().padStart(2, '0');
+            document.getElementById('game-time').innerText = `${mins}:${secs}`;
+            document.getElementById('kill-count').innerText = killCount;
+        }
+
+        function spawnEntities() {
+            if (frameCount % 35 === 0) {
+                const spawnDist = Math.hypot(viewWidth, viewHeight) / 2 + 20;
+                const angle = Math.random() * Math.PI * 2;
+                const ex = player.x + Math.cos(angle) * spawnDist;
+                const ey = player.y + Math.sin(angle) * spawnDist;
+
+                let type = 'waddleDee';
+                let hp = 15 + gameTime * 0.25;
+                let speed = 0.8 + Math.random() * 0.4;
+                let size = 20;
+
+                const rand = Math.random();
+                if (gameTime > 30 && rand > 0.6) {
+                    type = 'gordo';
+                    hp = 35 + gameTime * 0.35;
+                    speed = 0.6;
+                } else if (gameTime > 60 && rand > 0.8) {
+                    type = 'scarfy';
+                    hp = 22;
+                    speed = 1.3;
+                }
+
+                if (Math.floor(gameTime) > 0 && Math.floor(gameTime) % 90 === 0 && frameCount % 300 === 0) {
+                    type = 'dedede';
+                    hp = 450 + gameTime * 6;
+                    speed = 0.7;
+                    size = 36;
+                }
+
+                enemies.push({ x: ex, y: ey, type, hp, maxHp: hp, speed, size, hitFlash: 0 });
+            }
+
+            if (frameCount % 600 === 0 && fruits.length < 2) {
+                const availTypes = ['SWORD', 'FIRE', 'CUTTER', 'SPARK', 'BEAM', 'HAMMER'];
+                const fType = availTypes[Math.floor(Math.random() * availTypes.length)];
+                const fDist = 80 + Math.random() * 100;
+                const fAngle = Math.random() * Math.PI * 2;
+                fruits.push({
+                    x: player.x + Math.cos(fAngle) * fDist,
+                    y: player.y + Math.sin(fAngle) * fDist,
+                    type: fType
+                });
+            }
+        }
+
+        function handleAttacks() {
+            const cClass = CLASSES[player.currentClass];
+            const stats = cClass.stats;
+
+            player.attackTimer++;
+            if (player.attackTimer < stats.cd) return;
+            player.attackTimer = 0;
+
+            if (player.currentClass === 'NORMAL') {
+                sfx.star();
+                let target = null;
+                let minDist = 999;
+                enemies.forEach(e => {
+                    const d = Math.hypot(e.x - player.x, e.y - player.y);
+                    if (d < minDist) { minDist = d; target = e; }
+                });
+                const angle = target ? Math.atan2(target.y - player.y, target.x - player.x) : (player.facing === 1 ? 0 : Math.PI);
+                projectiles.push({
+                    type: 'STAR_BULLET',
+                    x: player.x, y: player.y,
+                    vx: Math.cos(angle) * stats.speed,
+                    vy: Math.sin(angle) * stats.speed,
+                    life: 45, maxLife: 45, damage: stats.damage
+                });
+            } else if (player.currentClass === 'SWORD') {
+                sfx.slash();
+                projectiles.push({
+                    type: 'SWORD_SLASH',
+                    x: player.x, y: player.y,
+                    dir: player.facing,
+                    range: stats.range,
+                    life: 14, maxLife: 14, damage: stats.damage
+                });
+            } else if (player.currentClass === 'FIRE') {
+                // Fire generates dynamic embers in the update loop instead of a static projectile
+                // We keep the damage hitbox logic in projectiles for simplicity
+                sfx.fire();
+                projectiles.push({
+                    type: 'FIRE_BURST',
+                    x: player.x, y: player.y,
+                    radius: stats.auraRadius,
+                    life: 15, maxLife: 15, damage: stats.damage
+                });
+            } else if (player.currentClass === 'CUTTER') {
+                sfx.slash();
+                projectiles.push({
+                    type: 'CUTTER_BLADE',
+                    x: player.x, y: player.y,
+                    vx: player.facing * stats.speed,
+                    vy: (Math.random() - 0.5) * 2,
+                    life: 55, maxLife: 55, damage: stats.damage
+                });
+            } else if (player.currentClass === 'SPARK') {
+                sfx.spark();
+                const targets = [...enemies].sort((a, b) => 
+                    Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y)
+                ).slice(0, stats.chainTargets);
+
+                targets.forEach(t => {
+                    t.hp -= stats.damage;
+                    t.hitFlash = 6;
+                    showDamage(t.x, t.y, stats.damage);
+                    createHitSpark(t.x, t.y, '#38bdf8');
+                    triggerShake(3, 5);
+                    particleEffects.push({
+                        type: 'LIGHTNING',
+                        x1: player.x, y1: player.y,
+                        x2: t.x, y2: t.y,
+                        life: 12, maxLife: 12
+                    });
+                });
+            } else if (player.currentClass === 'BEAM') {
+                sfx.spark();
+                projectiles.push({
+                    type: 'BEAM_WHIP',
+                    x: player.x, y: player.y,
+                    dir: player.facing,
+                    range: stats.range,
+                    life: 16, maxLife: 16, damage: stats.damage
+                });
+            } else if (player.currentClass === 'HAMMER') {
+                sfx.hammer();
+                const isCrit = Math.random() < stats.critChance;
+                projectiles.push({
+                    type: 'HAMMER_SMASH',
+                    x: player.x + player.facing * 20,
+                    y: player.y,
+                    radius: stats.smashRadius,
+                    life: 15, maxLife: 15,
+                    damage: stats.damage * (isCrit ? 2.5 : 1.0),
+                    isCrit: isCrit
+                });
+                triggerShake(6, 12);
+            }
+        }
+
+        // 獨立的碰撞傷害處理輔助函式
+        function applyDamage(e, dmg, pType, isCrit=false) {
+            e.hp -= dmg;
+            e.hitFlash = 6;
+            showDamage(e.x, e.y, dmg, isCrit);
+            createHitSpark(e.x, e.y, isCrit ? '#ef4444' : '#ffffff');
+            triggerShake(isCrit ? 4 : 1.5, 4);
+        }
+
         function update() {
             if (gameState !== 'PLAYING') return;
 
             frameCount++;
-            if (frameCount % 60 === 0) {
-                gameTime++;
-                // Spawn enemies faster over time
-                if (gameTime % 5 === 0) spawnEnemy();
-            }
+            gameTime += 1 / 60;
 
-            // Continuously spawn enemies
-            if (frameCount % Math.max(15, 60 - Math.floor(gameTime / 5)) === 0) {
-                spawnEnemy();
-            }
-
-            // 1. Move Player
+            // --- 玩家移動 ---
             let moveX = 0;
             let moveY = 0;
 
-            if (keys['KeyW'] || keys['ArrowUp']) moveY -= 1;
-            if (keys['KeyS'] || keys['ArrowDown']) moveY += 1;
             if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
             if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+            if (keys['KeyW'] || keys['ArrowUp']) moveY -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) moveY += 1;
 
-            if (joystick.active) {
-                moveX = joystick.moveX;
-                moveY = joystick.moveY;
+            if (joyActive) {
+                moveX = joyVector.x;
+                moveY = joyVector.y;
             }
 
-            // Normalize diagonal speed
-            if (moveX !== 0 && moveY !== 0 && !joystick.active) {
-                moveX *= 0.7071;
-                moveY *= 0.7071;
+            const len = Math.hypot(moveX, moveY);
+            if (len > 0) {
+                player.vx = (moveX / (len > 1 ? len : 1)) * player.speed;
+                player.vy = (moveY / (len > 1 ? len : 1)) * player.speed;
+                if (moveX !== 0) player.facing = moveX > 0 ? 1 : -1;
+            } else {
+                player.vx = 0;
+                player.vy = 0;
             }
 
-            player.x += moveX * player.speed;
-            player.y += moveY * player.speed;
+            player.x += player.vx;
+            player.y += player.vy;
 
-            if (moveX > 0) player.facingRight = true;
-            if (moveX < 0) player.facingRight = false;
+            // --- 發動攻擊 ---
+            handleAttacks();
 
-            // Camera smoothly follows player
-            cameraX = player.x - canvas.width / 2;
-            cameraY = player.y - canvas.height / 2;
-
-            // 2. Fire Skills
-            updateSkills();
-
-            // Fire Aura (烈火) Passive Damage logic
-            if (player.skills['fire']) {
-                const fireLvl = player.skills['fire'].level;
-                const auraRadius = 45 + fireLvl * 10;
-                const fireDmg = 0.8 + fireLvl * 0.4;
-
-                enemies.forEach(e => {
-                    const dist = Math.hypot(e.x - player.x, e.y - player.y);
-                    if (dist < auraRadius + e.radius) {
-                        e.hp -= fireDmg;
-                        e.hitTimer = 2;
-                        if (Math.random() < 0.15) {
-                            createFloatingText(`-${Math.round(fireDmg * 10)}`, e.x, e.y, '#ef4444');
-                        }
-                    }
-                });
+            // Fire 特殊常駐餘燼粒子生成
+            if (player.currentClass === 'FIRE' && frameCount % 3 === 0) {
+                for(let i=0; i<2; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = Math.random() * CLASSES['FIRE'].stats.auraRadius;
+                    particleEffects.push({
+                        type: 'FIRE_EMBER',
+                        x: player.x + Math.cos(angle) * r,
+                        y: player.y + Math.sin(angle) * r,
+                        vx: (Math.random() - 0.5) * 0.8,
+                        vy: -1 - Math.random() * 2,
+                        life: 25 + Math.random() * 15,
+                        maxLife: 40,
+                        size: 3 + Math.random() * 5,
+                        color: ['#fef08a', '#f97316', '#ef4444'][Math.floor(Math.random()*3)]
+                    });
+                }
             }
 
-            // 3. Update Projectiles
+            // --- 投射物與碰撞 ---
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i];
                 p.life--;
 
-                if (p.type === 'cutter') {
+                if (p.type === 'STAR_BULLET' || p.type === 'CUTTER_BLADE') {
                     p.x += p.vx;
                     p.y += p.vy;
-
-                    // Boomerang effect back to player
-                    if (p.life < p.maxLife / 2) {
-                        const dx = player.x - p.x;
-                        const dy = player.y - p.y;
-                        p.vx += dx * 0.05;
-                        p.vy += dy * 0.05;
+                    enemies.forEach(e => {
+                        if (e.hitFlash <= 0 && Math.hypot(e.x - p.x, e.y - p.y) < e.size / 2 + 6) {
+                            applyDamage(e, p.damage, p.type);
+                            sfx.hit();
+                            if(p.type === 'STAR_BULLET') p.life = 0; // Star gets destroyed, Cutter pierces
+                        }
+                    });
+                } else if (p.type === 'SWORD_SLASH') {
+                    if (p.life === p.maxLife - 2) { // 只有在剛揮砍的瞬間判定傷害
+                        const atkX = player.x + p.dir * 15;
+                        enemies.forEach(e => {
+                            if (Math.hypot(e.x - atkX, e.y - player.y) < p.range) {
+                                applyDamage(e, p.damage, p.type);
+                                e.x += p.dir * 5; // 小擊退
+                            }
+                        });
                     }
-
-                    // Collision with enemies
-                    enemies.forEach(e => {
-                        const dist = Math.hypot(e.x - p.x, e.y - p.y);
-                        if (dist < p.radius + e.radius) {
-                            e.hp -= p.damage;
-                            e.hitTimer = 4;
-                            createFloatingText(`-${p.damage}`, e.x, e.y, '#f59e0b');
-                        }
-                    });
-                } else if (p.type === 'sword_slash') {
-                    // Check slash hits
-                    enemies.forEach(e => {
-                        const dist = Math.hypot(e.x - p.x, e.y - p.y);
-                        if (dist < p.radius + e.radius) {
-                            e.hp -= p.damage;
-                            e.hitTimer = 4;
-                            // Knockback
-                            e.x += p.dir * 4;
-                            createFloatingText(`-${p.damage}`, e.x, e.y, '#3b82f6');
-                        }
-                    });
-                } else if (p.type === 'beam_whip') {
-                    enemies.forEach(e => {
-                        const dist = Math.hypot(e.x - p.x, e.y - p.y);
-                        if (dist < p.radius + e.radius) {
-                            e.hp -= p.damage;
-                            e.hitTimer = 4;
-                            createFloatingText(`-${p.damage}`, e.x, e.y, '#a855f7');
-                        }
-                    });
+                } else if (p.type === 'FIRE_BURST') {
+                    if (frameCount % 10 === 0) { // 每隔幾幀造成一次燃燒傷害
+                        enemies.forEach(e => {
+                            if (Math.hypot(e.x - player.x, e.y - player.y) < p.radius + e.size / 2) {
+                                applyDamage(e, p.damage / 3, p.type);
+                            }
+                        });
+                    }
+                } else if (p.type === 'BEAM_WHIP') {
+                    if (p.life === p.maxLife - 3) {
+                        const bx = player.x + p.dir * 25;
+                        enemies.forEach(e => {
+                            if (Math.hypot(e.x - bx, e.y - player.y) < p.range) {
+                                applyDamage(e, p.damage, p.type);
+                            }
+                        });
+                    }
+                } else if (p.type === 'HAMMER_SMASH') {
+                    if (p.life === p.maxLife - 2) {
+                        enemies.forEach(e => {
+                            if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius + e.size/2) {
+                                applyDamage(e, p.damage, p.type, p.isCrit);
+                                const a = Math.atan2(e.y - p.y, e.x - p.x);
+                                e.x += Math.cos(a) * (p.isCrit ? 15 : 6);
+                                e.y += Math.sin(a) * (p.isCrit ? 15 : 6);
+                            }
+                        });
+                    }
                 }
 
-                if (p.life <= 0) {
-                    projectiles.splice(i, 1);
-                }
+                if (p.life <= 0) projectiles.splice(i, 1);
             }
 
-            // 4. Update Enemies
+            // --- 敵人邏輯 ---
+            spawnEntities();
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const e = enemies[i];
-                if (e.hitTimer > 0) e.hitTimer--;
+                if(e.hitFlash > 0) e.hitFlash--;
 
-                // Move towards player
                 const angle = Math.atan2(player.y - e.y, player.x - e.x);
                 e.x += Math.cos(angle) * e.speed;
                 e.y += Math.sin(angle) * e.speed;
 
-                // Collide with Kirby
-                const distToPlayer = Math.hypot(player.x - e.x, player.y - e.y);
-                if (distToPlayer < player.radius + e.radius) {
-                    player.hp -= 0.5; // Damage over time on contact
-                    soundFX.playHit();
-                    if (player.hp <= 0) {
-                        triggerGameOver();
-                    }
+                if (Math.hypot(player.x - e.x, player.y - e.y) < (e.size / 2 + player.size / 2 - 2)) {
+                    player.hp -= 0.35;
+                    triggerShake(1, 2);
+                    if (player.hp <= 0) gameOver();
                 }
 
-                // Enemy Death
                 if (e.hp <= 0) {
                     killCount++;
-                    soundFX.playPop();
-
-                    // Spawn Star Experience Gem or Health Tomato
-                    const isChest = Math.random() < 0.02; // Treasure chest drop
-                    gems.push({
-                        x: e.x,
-                        y: e.y,
-                        val: e.expVal,
-                        isChest: isChest,
-                        radius: isChest ? 12 : 8
-                    });
-
-                    // Particles on death
-                    for (let p = 0; p < 6; p++) {
-                        particles.push({
-                            x: e.x,
-                            y: e.y,
-                            vx: (Math.random() - 0.5) * 4,
-                            vy: (Math.random() - 0.5) * 4,
-                            life: 15,
-                            color: e.color
-                        });
-                    }
-
+                    // 死亡爆破粒子
+                    createHitSpark(e.x, e.y, '#94a3b8');
+                    expStars.push({ x: e.x, y: e.y, value: e.type === 'dedede' ? 60 : 5 });
                     enemies.splice(i, 1);
                 }
             }
 
-            // 5. Update Gems & Magnet Pickup
-            for (let i = gems.length - 1; i >= 0; i--) {
-                const g = gems[i];
-                const dist = Math.hypot(player.x - g.x, player.y - g.y);
-
-                if (dist < player.pickupRadius) {
-                    // Magnet fly towards player
-                    const angle = Math.atan2(player.y - g.y, player.x - g.x);
-                    g.x += Math.cos(angle) * 6;
-                    g.y += Math.sin(angle) * 6;
+            // --- 道具拾取 ---
+            for (let i = expStars.length - 1; i >= 0; i--) {
+                const s = expStars[i];
+                const dist = Math.hypot(player.x - s.x, player.y - s.y);
+                if (dist < 65) {
+                    s.x += (player.x - s.x) * 0.18;
+                    s.y += (player.y - s.y) * 0.18;
                 }
-
-                if (dist < player.radius + g.radius) {
-                    if (g.isChest) {
-                        // Treasure Chest grants instant heal + level bonus!
-                        soundFX.playChest();
-                        player.hp = Math.min(player.maxHp, player.hp + 40);
-                        createFloatingText('體力全滿！', player.x, player.y - 20, '#10b981');
-                        player.exp += 15;
-                    } else {
-                        soundFX.playGem();
-                        player.exp += g.val;
-                    }
-
-                    // Level Up check
-                    if (player.exp >= player.nextExp) {
-                        player.level++;
-                        player.exp -= player.nextExp;
-                        player.nextExp = Math.floor(player.nextExp * 1.4);
-                        triggerLevelUp();
-                    }
-
-                    gems.splice(i, 1);
+                if (dist < 12) {
+                    player.exp += s.value;
+                    sfx.star();
+                    expStars.splice(i, 1);
+                    checkLevelUp();
                 }
             }
 
-            // 6. Update Particles & Floating Text
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const pt = particles[i];
-                pt.x += pt.vx;
-                pt.y += pt.vy;
+            for (let i = fruits.length - 1; i >= 0; i--) {
+                const f = fruits[i];
+                if (Math.hypot(player.x - f.x, player.y - f.y) < 18) {
+                    transformToClass(f.type);
+                    fruits.splice(i, 1);
+                }
+            }
+
+            // --- 粒子特效與漂浮字體更新 ---
+            for (let i = particleEffects.length - 1; i >= 0; i--) {
+                const pt = particleEffects[i];
                 pt.life--;
-                if (pt.life <= 0) particles.splice(i, 1);
+                if (pt.vx !== undefined) pt.x += pt.vx;
+                if (pt.vy !== undefined) pt.y += pt.vy;
+                if (pt.life <= 0) particleEffects.splice(i, 1);
             }
 
             for (let i = floatingTexts.length - 1; i >= 0; i--) {
                 const ft = floatingTexts[i];
-                ft.y += ft.vy;
                 ft.life--;
+                ft.y += ft.vy;
                 if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            // --- 螢幕震動衰減 ---
+            if (screenShake.duration > 0) {
+                screenShake.duration--;
+                screenShake.x = (Math.random() - 0.5) * screenShake.intensity;
+                screenShake.y = (Math.random() - 0.5) * screenShake.intensity;
+            } else {
+                screenShake.x = 0;
+                screenShake.y = 0;
             }
 
             updateHUD();
         }
 
-        // --- RENDER GAME (HTML5 Canvas) ---
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function draw() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.fillStyle = '#18122B';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.scale(scaleFactor, scaleFactor);
+
+            // 套用鏡頭偏移與螢幕震動特效
+            const camX = viewWidth / 2 - player.x + screenShake.x;
+            const camY = viewHeight / 2 - player.y + screenShake.y;
 
             ctx.save();
-            // Translate camera
-            ctx.translate(-cameraX, -cameraY);
+            ctx.translate(camX, camY);
 
-            // Draw Background Grid/Stars Pattern
-            drawBackground();
+            // 背景網格
+            ctx.fillStyle = '#231942';
+            const startR = Math.floor((player.y - viewHeight) / 32);
+            const endR = Math.floor((player.y + viewHeight) / 32);
+            const startC = Math.floor((player.x - viewWidth) / 32);
+            const endC = Math.floor((player.x + viewWidth) / 32);
 
-            // 1. Draw Gems & Chests
-            gems.forEach(g => {
-                if (g.isChest) {
-                    // Treasure Chest (寶箱)
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.fillRect(g.x - 10, g.y - 8, 20, 16);
-                    ctx.fillStyle = '#fef08a';
-                    ctx.fillRect(g.x - 3, g.y - 3, 6, 6);
-                } else {
-                    // Star Fragment Gem (經驗星)
-                    ctx.fillStyle = '#facc15';
-                    ctx.beginPath();
-                    ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-                }
-            });
-
-            // 2. Draw Projectiles & Skill Effects
-            projectiles.forEach(p => {
-                ctx.save();
-                if (p.type === 'sword_slash') {
-                    ctx.strokeStyle = p.color;
-                    ctx.lineWidth = 6;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, -Math.PI / 3, Math.PI / 3);
-                    ctx.stroke();
-                } else if (p.type === 'cutter') {
-                    ctx.fillStyle = p.color;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.stroke();
-                } else if (p.type === 'spark_lightning') {
-                    ctx.strokeStyle = p.color;
-                    ctx.lineWidth = 4;
-                    ctx.beginPath();
-                    ctx.moveTo(p.startX, p.startY);
-                    ctx.lineTo((p.startX + p.targetX) / 2 + (Math.random() - 0.5) * 30, (p.startY + p.targetY) / 2 + (Math.random() - 0.5) * 30);
-                    ctx.lineTo(p.targetX, p.targetY);
-                    ctx.stroke();
-                } else if (p.type === 'beam_whip') {
-                    ctx.strokeStyle = p.color;
-                    ctx.lineWidth = 8;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, p.angle - 0.8, p.angle + 0.8);
-                    ctx.stroke();
-                }
-                ctx.restore();
-            });
-
-            // Fire Aura Skill Render
-            if (player.skills['fire']) {
-                const auraR = 45 + player.skills['fire'].level * 10;
-                ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, auraR, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Orbiting flames
-                const flameCount = 3 + player.skills['fire'].level;
-                for (let f = 0; f < flameCount; f++) {
-                    const angle = (frameCount * 0.05) + (f * (Math.PI * 2 / flameCount));
-                    const fx = player.x + Math.cos(angle) * auraR;
-                    const fy = player.y + Math.sin(angle) * auraR;
-                    ctx.fillStyle = '#ef4444';
-                    ctx.beginPath();
-                    ctx.arc(fx, fy, 8, 0, Math.PI * 2);
-                    ctx.fill();
+            for (let r = startR; r <= endR; r++) {
+                for (let c = startC; c <= endC; c++) {
+                    if ((r + c) % 2 === 0) {
+                        ctx.fillRect(c * 32, r * 32, 32, 32);
+                    }
                 }
             }
 
-            // 3. Draw Enemies
+            // 繪製道具
+            fruits.forEach(f => {
+                const sprite = Sprites['fruit_' + f.type];
+                if (sprite) ctx.drawImage(sprite, Math.round(f.x - 8), Math.round(f.y - 8));
+            });
+
+            expStars.forEach(s => {
+                ctx.drawImage(Sprites.star, Math.round(s.x - 5), Math.round(s.y - 5));
+            });
+
+            // 繪製敵人
             enemies.forEach(e => {
                 ctx.save();
-                ctx.fillStyle = e.hitTimer > 0 ? '#ffffff' : e.color;
+                ctx.translate(Math.round(e.x), Math.round(e.y));
+                if (e.x > player.x) ctx.scale(-1, 1);
 
-                if (e.type === 'king_dedede') {
-                    // Boss King Dedede (帝帝帝大王)
-                    ctx.beginPath();
-                    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    // Crown
-                    ctx.fillStyle = '#facc15';
-                    ctx.fillRect(e.x - 12, e.y - e.radius - 10, 24, 10);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-                    ctx.fill();
+                let sprite = Sprites.waddleDee;
+                if (e.type === 'gordo') sprite = Sprites.gordo;
+                if (e.type === 'scarfy') sprite = Sprites.scarfy;
+                if (e.type === 'dedede') sprite = Sprites.dedede;
+
+                const half = e.size / 2;
+                
+                // 受擊閃白特效
+                if (e.hitFlash > 0) {
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.filter = 'brightness(200%) grayscale(100%)';
                 }
 
-                // Eyes
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(e.x - e.radius * 0.3, e.y - 3, 2.5, 0, Math.PI * 2);
-                ctx.arc(e.x + e.radius * 0.3, e.y - 3, 2.5, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.drawImage(sprite, -half, -half, e.size, e.size);
+                ctx.restore();
 
+                // 敵人血條
+                if (e.hp < e.maxHp) {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(e.x - 10, e.y - e.size / 2 - 5, 20, 3);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(e.x - 10, e.y - e.size / 2 - 5, Math.max(0, (e.hp / e.maxHp) * 20), 3);
+                }
+            });
+
+            // 繪製玩家卡比
+            ctx.save();
+            ctx.translate(Math.round(player.x), Math.round(player.y));
+            if (player.facing === -1) ctx.scale(-1, 1);
+
+            const classSprite = Sprites['kirby' + player.currentClass] || Sprites.kirbyNORMAL;
+            ctx.drawImage(classSprite, -12, -12);
+            ctx.restore();
+
+            // 繪製粒子特效 (Particles)
+            particleEffects.forEach(pt => {
+                ctx.save();
+                if (pt.type === 'FIRE_EMBER') {
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.fillStyle = pt.color;
+                    ctx.globalAlpha = pt.life / pt.maxLife;
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, pt.size * (pt.life / pt.maxLife), 0, Math.PI*2);
+                    ctx.fill();
+                } else if (pt.type === 'LIGHTNING') {
+                    ctx.beginPath();
+                    ctx.moveTo(pt.x1, pt.y1);
+                    const steps = 3;
+                    for(let i=1; i<=steps; i++) {
+                        const tx = pt.x1 + (pt.x2-pt.x1)*(i/steps) + (Math.random()-0.5)*15;
+                        const ty = pt.y1 + (pt.y2-pt.y1)*(i/steps) + (Math.random()-0.5)*15;
+                        ctx.lineTo(i===steps ? pt.x2 : tx, i===steps ? pt.y2 : ty);
+                    }
+                    ctx.strokeStyle = (frameCount % 2 === 0) ? '#ffffff' : '#38bdf8'; // 閃電頻閃
+                    ctx.lineWidth = 2 + Math.random()*2;
+                    ctx.stroke();
+                    // 發光節點
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath(); ctx.arc(pt.x2, pt.y2, 4 + Math.random()*4, 0, Math.PI*2); ctx.fill();
+                } else if (pt.type === 'HIT_SPARK' || pt.type === 'TRANSFORM_RING') {
+                    ctx.fillStyle = pt.color;
+                    ctx.globalAlpha = pt.life / pt.maxLife;
+                    ctx.fillRect(Math.round(pt.x - 2), Math.round(pt.y - 2), 4, 4);
+                }
                 ctx.restore();
             });
 
-            // 4. Draw Player (Kirby 卡比)
-            ctx.save();
-            // Kirby Body (Pink Sphere)
-            ctx.fillStyle = '#f472b6'; // Kirby Pink
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#db2777';
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-
-            // Kirby Red Feet
-            ctx.fillStyle = '#e11d48';
-            ctx.beginPath();
-            ctx.ellipse(player.x - 10, player.y + 16, 8, 5, 0, 0, Math.PI * 2);
-            ctx.ellipse(player.x + 10, player.y + 16, 8, 5, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Kirby Eyes
-            ctx.fillStyle = '#1e3a8a';
-            const eyeOffset = player.facingRight ? 4 : -4;
-            ctx.beginPath();
-            ctx.ellipse(player.x - 5 + eyeOffset, player.y - 4, 3, 6, 0, 0, Math.PI * 2);
-            ctx.ellipse(player.x + 5 + eyeOffset, player.y - 4, 3, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Rosy Cheeks
-            ctx.fillStyle = '#f43f5e';
-            ctx.beginPath();
-            ctx.arc(player.x - 10 + eyeOffset, player.y + 3, 3.5, 0, Math.PI * 2);
-            ctx.arc(player.x + 10 + eyeOffset, player.y + 3, 3.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-
-            // 5. Draw Particles
-            particles.forEach(pt => {
-                ctx.fillStyle = pt.color;
-                ctx.fillRect(pt.x, pt.y, 4, 4);
+            // 繪製投射物 & 攻擊特效 (Projectiles & Attack VFX)
+            projectiles.forEach(p => {
+                if (p.type === 'STAR_BULLET') {
+                    ctx.drawImage(Sprites.star, Math.round(p.x - 5), Math.round(p.y - 5));
+                } else if (p.type === 'SWORD_SLASH') {
+                    // 動態漸層新月斬擊
+                    ctx.save();
+                    ctx.translate(Math.round(player.x), Math.round(player.y));
+                    ctx.beginPath();
+                    const sweepDir = p.dir;
+                    const progress = 1 - (p.life / p.maxLife); // 0 to 1
+                    const startA = sweepDir === 1 ? -Math.PI * 0.7 : Math.PI * 1.7;
+                    const endA = startA + sweepDir * Math.PI * 1.2 * progress;
+                    
+                    ctx.arc(0, 0, p.range, startA, endA, sweepDir === -1);
+                    ctx.lineWidth = 15 * (1 - progress);
+                    ctx.lineCap = 'round';
+                    
+                    const grad = ctx.createLinearGradient(0, 0, sweepDir * p.range, 0);
+                    grad.addColorStop(0, '#ffffff');
+                    grad.addColorStop(0.3, '#4ade80');
+                    grad.addColorStop(1, 'transparent');
+                    
+                    ctx.strokeStyle = grad;
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (p.type === 'CUTTER_BLADE') {
+                    // 多重殘影飛刀
+                    for (let i=0; i<3; i++) {
+                        ctx.save();
+                        ctx.translate(Math.round(p.x - p.vx*i*1.5), Math.round(p.y - p.vy*i*1.5));
+                        ctx.rotate((frameCount - i*2) * 0.6);
+                        ctx.globalAlpha = 1 - (i*0.3);
+                        ctx.fillStyle = '#facc15';
+                        ctx.fillRect(-8, -2, 16, 4);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(-2, -8, 4, 16);
+                        ctx.restore();
+                    }
+                } else if (p.type === 'BEAM_WHIP') {
+                    // 掃蕩光束魔法鞭
+                    ctx.save();
+                    ctx.translate(Math.round(player.x), Math.round(player.y));
+                    const progress = 1 - (p.life / p.maxLife);
+                    const angle = (p.dir === 1 ? -0.8 : Math.PI - 0.8) + p.dir * 1.6 * progress;
+                    
+                    for(let i=0; i<5; i++) {
+                        const dist = p.range * (i/4);
+                        ctx.beginPath();
+                        ctx.arc(Math.cos(angle)*dist, Math.sin(angle)*dist, 4 + i, 0, Math.PI*2);
+                        ctx.fillStyle = `rgba(192, 132, 252, ${0.4 + i*0.1})`;
+                        ctx.fill();
+                        if (i === 4) { // 前端發光
+                            ctx.fillStyle = '#ffffff';
+                            ctx.beginPath(); ctx.arc(Math.cos(angle)*dist, Math.sin(angle)*dist, 4, 0, Math.PI*2); ctx.fill();
+                        }
+                    }
+                    ctx.restore();
+                } else if (p.type === 'HAMMER_SMASH') {
+                    // 重力砸地衝擊波
+                    ctx.save();
+                    const progress = 1 - (p.life / p.maxLife);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius * progress, 0, Math.PI * 2);
+                    ctx.strokeStyle = p.isCrit ? '#ef4444' : '#facc15';
+                    ctx.lineWidth = 6 * (1 - progress);
+                    ctx.stroke();
+                    // 內圈爆破
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, (p.radius * 0.6) * progress, 0, Math.PI * 2);
+                    ctx.fillStyle = p.isCrit ? 'rgba(239, 68, 68, 0.4)' : 'rgba(250, 204, 21, 0.4)';
+                    ctx.fill();
+                    ctx.restore();
+                }
             });
 
-            // 6. Draw Floating Damage Text
+            // 繪製飄浮傷害數字
             floatingTexts.forEach(ft => {
-                ctx.fillStyle = ft.color;
-                ctx.font = '900 14px "Noto Sans TC", sans-serif';
+                ctx.save();
+                ctx.font = ft.isCrit ? '900 16px "Noto Sans TC", sans-serif' : '900 10px "Noto Sans TC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.globalAlpha = ft.life / ft.maxLife;
+                
+                // 黑底外框
+                ctx.lineWidth = ft.isCrit ? 3 : 2;
+                ctx.strokeStyle = '#000000';
+                ctx.strokeText(ft.text, ft.x, ft.y);
+                
+                // 數字填充
+                ctx.fillStyle = ft.isCrit ? '#ef4444' : '#ffffff';
                 ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
             });
 
             ctx.restore();
         }
 
-        function drawBackground() {
-            // Starry grid field
-            const gridSize = 100;
-            const startX = Math.floor(cameraX / gridSize) * gridSize;
-            const startY = Math.floor(cameraY / gridSize) * gridSize;
-
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.lineWidth = 1;
-
-            for (let x = startX; x < startX + canvas.width + gridSize; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, cameraY);
-                ctx.lineTo(x, cameraY + canvas.height);
-                ctx.stroke();
-            }
-            for (let y = startY; y < startY + canvas.height + gridSize; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(cameraX, y);
-                ctx.lineTo(cameraX + canvas.width, y);
-                ctx.stroke();
-            }
-        }
-
-        // --- HUD UI UPDATES ---
-        function updateHUD() {
-            document.getElementById('hud-level').innerText = player.level;
-            document.getElementById('hud-level-text').innerText = player.level;
-            document.getElementById('hud-exp-text').innerText = `${player.exp} / ${player.nextExp}`;
-            document.getElementById('hud-exp-bar').style.width = `${Math.min(100, (player.exp / player.nextExp) * 100)}%`;
-
-            document.getElementById('hud-hp-text').innerText = `${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp}`;
-            document.getElementById('hud-hp-bar').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
-
-            const mins = Math.floor(gameTime / 60).toString().padStart(2, '0');
-            const secs = (gameTime % 60).toString().padStart(2, '0');
-            document.getElementById('hud-timer').innerText = `${mins}:${secs}`;
-            document.getElementById('hud-kills').innerText = killCount;
-
-            // Render HUD Active Skill Icons
-            const hudAbilities = document.getElementById('hud-abilities');
-            hudAbilities.innerHTML = '';
-            Object.keys(player.skills).forEach(id => {
-                const sk = player.skills[id];
-                const iconBox = document.createElement('div');
-                iconBox.className = 'w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shadow-lg border border-white/20 relative';
-                iconBox.style.backgroundColor = sk.color;
-                iconBox.innerHTML = `
-                    <i class="fa-solid ${sk.icon}"></i>
-                    <span class="absolute -bottom-1 -right-1 text-[10px] bg-slate-950 px-1.5 rounded-full font-black text-amber-400 border border-slate-700">Lv${sk.level}</span>
-                `;
-                hudAbilities.appendChild(iconBox);
-            });
-        }
-
-        // --- GAME OVER ---
-        function triggerGameOver() {
+        function gameOver() {
             gameState = 'GAMEOVER';
-
             const mins = Math.floor(gameTime / 60).toString().padStart(2, '0');
-            const secs = (gameTime % 60).toString().padStart(2, '0');
-
+            const secs = Math.floor(gameTime % 60).toString().padStart(2, '0');
             document.getElementById('final-time').innerText = `${mins}:${secs}`;
+            document.getElementById('final-class').innerText = CLASSES[player.currentClass].name;
             document.getElementById('final-kills').innerText = killCount;
             document.getElementById('final-level').innerText = player.level;
-
-            document.getElementById('gameover-modal').classList.remove('hidden');
+            document.getElementById('game-over-modal').classList.remove('hidden');
         }
 
-        // --- MAIN GAME LOOP ---
         function gameLoop() {
             update();
-            render();
+            draw();
             requestAnimationFrame(gameLoop);
         }
 
-        // --- BUTTON EVENT LISTENERS ---
-        document.getElementById('start-btn').onclick = startGame;
-        document.getElementById('restart-btn').onclick = startGame;
+        // 按鈕綁定
+        document.getElementById('start-btn').onclick = () => {
+            sfx.init();
+            document.getElementById('start-screen').classList.add('hidden');
+            initGame();
+            gameState = 'PLAYING';
+        };
 
-        // Run Loop on Page Load
+        document.getElementById('changelog-btn').onclick = () => {
+            document.getElementById('changelog-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('close-changelog-btn').onclick = () => {
+            document.getElementById('changelog-modal').classList.add('hidden');
+        };
+
+        document.getElementById('restart-btn').onclick = () => {
+            document.getElementById('game-over-modal').classList.add('hidden');
+            initGame();
+            gameState = 'PLAYING';
+        };
+
         window.onload = () => {
-            gameLoop();
+            resizeCanvas();
+            requestAnimationFrame(gameLoop);
         };
     </script>
 </body>
