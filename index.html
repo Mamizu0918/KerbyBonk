@@ -118,8 +118,8 @@
     <div id="hud">
         <div>❤️ HP: <span id="hp-text">100/100</span></div>
         <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">精靈圖對齊模式</span></div>
-        <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動調整位置</div>
+        <div>🔥 狀態: <span id="ability-text">精靈圖往左微調中</span></div>
+        <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動測試</div>
     </div>
     <div id="mobile-ui" class="mobile-ui">
         <div id="joystick-container"><div id="joystick-stick"></div></div>
@@ -146,18 +146,18 @@ const kirby = {
     vx: 0, vy: 0,
     facingRight: true,
     
-    // 🎯 【精靈圖裁切設定】：如果位置不對，可以直接修改以下數值來對齊！
-    frameWidth: 32,   // 每一格圖像的寬度 (px)
-    frameHeight: 32,  // 每一格圖像的高度 (px)
-    startX: 0,        // 第一張圖的水平起始位置 (px)
-    startY: 0,        // 走路動作所在的行高度 (px)
-    spacing: 0,       // 圖片與圖片之間的間距 (px)
+    // 🎯 調整區：已經將 startX 改為 -4（往左微調），若還需要更左可改為 -8、-12 等
+    frameWidth: 32,   
+    frameHeight: 32,  
+    startX: -4,       
+    startY: 0,        
+    spacing: 0,       
     
-    displaySize: 56,  // 卡比在遊戲畫布中實際顯示的大小
+    displaySize: 56,  
     
     animTimer: 0,
     currentFrame: 0,
-    totalWalkFrames: 4, // 走路循環的格數
+    totalWalkFrames: 4,
 
     initPosition() {
         this.x = canvas.width / 2;
@@ -180,7 +180,7 @@ const kirby = {
                 this.animTimer = 0;
             }
         } else {
-            this.currentFrame = 0; // 靜止時回到第一格
+            this.currentFrame = 0;
         }
     },
 
@@ -193,7 +193,6 @@ const kirby = {
         }
 
         if (kirbySpriteSheet.complete && kirbySpriteSheet.naturalWidth !== 0) {
-            // 計算當前影格在精靈圖上的精確座標
             let srcX = this.startX + this.currentFrame * (this.frameWidth + this.spacing);
             let srcY = this.startY;
 
@@ -204,7 +203,6 @@ const kirby = {
                 this.displaySize, this.displaySize
             );
         } else {
-            // 備用圓形
             ctx.beginPath();
             ctx.arc(0, 0, 24, 0, Math.PI * 2);
             ctx.fillStyle = '#ffb6c1';
