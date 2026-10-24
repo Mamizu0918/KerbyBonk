@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kirby Bonk! - 星之卡比大亂鬥原型</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1a2e;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1024px;
+            max-height: 768px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            background-color: #70c5ce;
+            display: block;
+        }
+        /* 手機 UI 按鈕層 */
+        .mobile-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .touch-btn {
+            position: absolute;
+            pointer-events: auto;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .touch-btn:active {
+            background: rgba(255, 255, 255, 0.7);
+            transform: scale(0.95);
+        }
+        /* 虛擬搖桿底座 */
+        #joystick-base {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            pointer-events: auto;
+        }
+        #joystick-stick {
+            position: absolute;
+            top: 35px;
+            left: 35px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 105, 180, 0.8);
+        }
+        /* 技能按鈕 */
+        #btn-inhale {
+            bottom: 40px;
+            right: 40px;
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 182, 193, 0.8);
+        }
+        #btn-ability {
+            bottom: 120px;
+            right: 50px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 215, 0, 0.8);
+        }
+        /* HUD 資訊 */
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="hud">
+        <div>❤️ HP: <span id="hp-text">100/100</span></div>
+        <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
+        <div>🔥 當前能力: <span id="ability-text">無 (Normal)</span></div>
+        <div style="font-size:12px; margin-top:5px; color:#ddd;">💻 鍵盤操作：WASD 移動 / 空白鍵 吸吐 / Shift 技能</div>
+    </div>
+
+    <!-- 手機觸控層 -->
+    <div class="mobile-ui">
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
+        </div>
+        <div id="btn-inhale" class="touch-btn">吸/吐</div>
+        <div id="btn-ability" class="touch-btn">技能</div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Canvas 自適應解析度
+function resizeCanvas() {
+    const container = document.getElementById('game-container');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// --- 遊戲狀態 ---
+const gameState = {
+    score: 0,
+    enemiesDefeated: 0
+};
+
+// --- 主角：卡比 ---
+const kirby = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 20,
+    speed: 4,
+    hp: 100,
+    maxHp: 100,
+    level: 1,
+    exp: 0,
+    nextExp: 10,
+    vx: 0,
+    vy: 0,
+    facingAngle: 0,
+    
+    // 吸入與複製能力機制
+    isInhaling: false,
+    mouthFull: null, // null 或 被吸入的敵人物件
+    ability: 'none', // 'none', 'fire'
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // 邊界限制
+        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+
+        // 更新面向角度
+        if (this.vx !== 0 || this.vy !== 0) {
+            this.facingAngle = Math.atan2(this.vy, this.vx);
+        }
+
+        // 自動回復/被動技能更新
+    },
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // 繪製卡比身體 (粉紅色圓形)
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.mouthFull ? '#ff8da1' : '#ffb6c1';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#d65b7a';
+        ctx.stroke();
+
+        // 眼睛
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(6, -4, 3, 0, Math.PI * 2);
+        ctx.arc(-6, -4, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 嘴巴 (如果嘴裡有東西會鼓起)
+        ctx.fillStyle = '#b3003b';
+        ctx.beginPath();
+        if (this.mouthFull) {
+            ctx.arc(0, 4, 8, 0, Math.PI * 2);
+        } else if (this.isInhaling) {
+            ctx.arc(0, 4, 10, 0, Math.PI * 2); // 吸氣大嘴
+        } else {
+            ctx.arc(0, 2, 4, 0, Math.PI); // 微笑
+        }
+        ctx.fill();
+
+        // 吸氣風暴效果
+        if (this.isInhaling && !this.mouthFull) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 2;
+            for (let i = -1; i <= 1; i++) {
+                let angle = this.facingAngle + i * 0.3;
+                let startX = Math.cos(angle) * 20;
+                let startY = Math.sin(angle) * 20;
+                let endX = Math.cos(angle) * 80;
+                let endY = Math.sin(angle) * 80;
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+            }
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+};
+
+// --- 敵人與子彈陣列 ---
+let enemies = [];
+let bullets = [];
+let particles = [];
+
+// 敵人類別
+class Enemy {
+    constructor(x, y, type = 'waddle_dee') {
+        this.x = x;
+        this.y = y;
+        this.type = type; // 'waddle_dee', 'hot_head'
+        this.radius = type === 'hot_head' ? 18 : 15;
+        this.color = type === 'hot_head' ? '#ff4500' : '#ffa500';
+        this.speed = type === 'hot_head' ? 1.2 : 1.5;
+        this.hp = type === 'hot_head' ? 30 : 15;
+    }
+
+    update() {
+        // 向卡比移動
+        let angle = Math.atan2(kirby.y - this.y, kirby.x - this.x);
+        this.x += Math.cos(angle) * this.speed;
+        this.y += Math.sin(angle) * this.speed;
+
+        // 被卡比吸入邏輯
+        if (kirby.isInhaling && !kirby.mouthFull) {
+            let dist = Math.hypot(kirby.x - this.x, kirby.y - this.y);
+            if (dist < 100) {
+                // 吸向卡比
+                this.x += (kirby.x - this.x) * 0.1;
+                this.y += (kirby.y - this.y) * 0.1;
+                
+                if (dist < kirby.radius + 10) {
+                    kirby.mouthFull = this;
+                    enemies = enemies.filter(e => e !== this);
+                    if (this.type === 'hot_head') kirby.ability = 'fire';
+                    updateHUD();
+                }
+            }
+        }
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#333';
+        ctx.stroke();
+    }
+}
+
+// 吐出的星星子彈
+class StarBullet {
+    constructor(x, y, angle) {
+        this.x = x;
+        this.y = y;
+        this.vx = Math.cos(angle) * 10;
+        this.vy = Math.sin(angle) * 10;
