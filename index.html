@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kirby Bonk! - GIF 動畫流暢版</title>
+    <title>Kirby Bonk! - 外部連結 GIF 版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -118,7 +118,7 @@
     <div id="hud">
         <div>❤️ HP: <span id="hp-text">100/100</span></div>
         <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">GIF 動畫流暢模式</span></div>
+        <div>🔥 狀態: <span id="ability-text">外部連結 GIF 模式</span></div>
         <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動</div>
     </div>
     <div id="mobile-ui" class="mobile-ui">
@@ -137,16 +137,17 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     document.getElementById('mobile-ui').style.display = 'block';
 }
 
-// 📥 直接載入 GIF 動畫圖檔
+// 🌐 直接使用你提供的外部 GIF 連結 (透過 Tenor 外部圖床)
 const kirbyGif = new Image();
-kirbyGif.src = 'assets/kirby_walk.gif'; // 請將你的 GIF 命名為 kirby_walk.gif 並放入 assets/ 資料夾
+kirbyGif.crossOrigin = "anonymous";
+kirbyGif.src = "https://media.tenor.com/Ul8LOoNURUoAAAAj/kirby-walk.gif";
 
 const kirby = {
     x: 0, y: 0,
     speed: 4,
     vx: 0, vy: 0,
     facingRight: true,
-    displaySize: 60, // 卡比顯示大小
+    displaySize: 60,
 
     initPosition() {
         this.x = canvas.width / 2;
@@ -168,18 +169,17 @@ const kirby = {
         ctx.translate(this.x, this.y);
 
         if (!this.facingRight) {
-            ctx.scale(-1, 1); // 轉向時自動水平翻轉
+            ctx.scale(-1, 1);
         }
 
         if (kirbyGif.complete && kirbyGif.naturalWidth !== 0) {
-            // 直接畫出 GIF，瀏覽器會自動撥放動態影格！
             ctx.drawImage(
                 kirbyGif,
                 -this.displaySize / 2, -this.displaySize / 2,
                 this.displaySize, this.displaySize
             );
         } else {
-            // 備用圓形
+            // 備用圓形（若圖片還在載入中）
             ctx.beginPath();
             ctx.arc(0, 0, 24, 0, Math.PI * 2);
             ctx.fillStyle = '#ffb6c1';
