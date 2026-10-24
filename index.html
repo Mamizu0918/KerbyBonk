@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kirby Bonk! - 外部連結 GIF 版</title>
+    <title>Kirby Bonk! - 原生 GIF 流暢版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -39,7 +39,19 @@
             display: block;
             image-rendering: pixelated;
         }
+
+        /* 🌸 原生動態卡比元素 */
+        #kirby-sprite {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            pointer-events: none;
+            image-rendering: pixelated;
+            transform-origin: center center;
+            z-index: 10;
+        }
         
+        /* 📱 手機觸控介面 */
         .mobile-ui {
             position: absolute;
             top: 0;
@@ -48,6 +60,7 @@
             height: 100%;
             pointer-events: none;
             display: none;
+            z-index: 20;
         }
         #joystick-container {
             position: absolute;
@@ -108,6 +121,7 @@
             padding: 12px 18px; border-radius: 12px;
             border: 2px solid rgba(255, 255, 255, 0.4);
             pointer-events: none;
+            z-index: 20;
         }
     </style>
 </head>
@@ -115,12 +129,17 @@
 
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
+
+    <!-- 原生 GIF 圖片 -->
+    <img id="kirby-sprite" src="https://media.tenor.com/Ul8LOoNURUoAAAAj/kirby-walk.gif" alt="Kirby">
+
     <div id="hud">
         <div>❤️ HP: <span id="hp-text">100/100</span></div>
         <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">外部連結 GIF 模式</span></div>
+        <div>🔥 狀態: <span id="ability-text">DOM 原生 GIF 播放模式</span></div>
         <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動</div>
     </div>
+
     <div id="mobile-ui" class="mobile-ui">
         <div id="joystick-container"><div id="joystick-stick"></div></div>
         <div id="btn-ability" class="pixel-btn"><span style="font-size: 20px;">⚔️</span><span>技能</span></div>
@@ -132,22 +151,18 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const container = document.getElementById('game-container');
+const kirbyElement = document.getElementById('kirby-sprite');
 
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     document.getElementById('mobile-ui').style.display = 'block';
 }
-
-// 🌐 直接使用你提供的外部 GIF 連結 (透過 Tenor 外部圖床)
-const kirbyGif = new Image();
-kirbyGif.crossOrigin = "anonymous";
-kirbyGif.src = "https://media.tenor.com/Ul8LOoNURUoAAAAj/kirby-walk.gif";
 
 const kirby = {
     x: 0, y: 0,
     speed: 4,
     vx: 0, vy: 0,
     facingRight: true,
-    displaySize: 60,
+    size: 60,
 
     initPosition() {
         this.x = canvas.width / 2;
@@ -165,28 +180,10 @@ const kirby = {
     },
 
     draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-
-        if (!this.facingRight) {
-            ctx.scale(-1, 1);
-        }
-
-        if (kirbyGif.complete && kirbyGif.naturalWidth !== 0) {
-            ctx.drawImage(
-                kirbyGif,
-                -this.displaySize / 2, -this.displaySize / 2,
-                this.displaySize, this.displaySize
-            );
-        } else {
-            // 備用圓形（若圖片還在載入中）
-            ctx.beginPath();
-            ctx.arc(0, 0, 24, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffb6c1';
-            ctx.fill();
-        }
-
-        ctx.restore();
+        // 更新卡比 DOM 元素的像素位置與翻轉狀態
+        kirbyElement.style.left = `${this.x - this.size / 2}px`;
+        kirbyElement.style.top = `${this.y - this.size / 2}px`;
+        kirbyElement.style.transform = this.facingRight ? 'scaleX(1)' : 'scaleX(-1)';
     }
 };
 
@@ -241,9 +238,9 @@ function gameLoop() {
 
     kirby.update();
 
+    // 清空畫布並重繪背景
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 草地背景
     ctx.fillStyle = '#5bb381';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#53a675';
