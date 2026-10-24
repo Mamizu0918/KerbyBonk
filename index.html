@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>星之卡比：能力變身倖存者 v1.5.2 (Kirby Survivors)</title>
+    <title>Kerbybonk v1.5.2 (Kirby Survivors)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@500;700;900&display=swap');
@@ -175,7 +175,7 @@
             <div class="absolute top-3 right-3 bg-pink-950 border border-pink-400 text-pink-300 font-pixel text-[8px] px-2 py-1 rounded-full shadow">v1.5.2 效能穩定版</div>
             
             <div class="text-4xl mb-1">⭐</div>
-            <h1 class="text-2xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-yellow-200 mb-1 font-pixel tracking-tight">星之卡比</h1>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-yellow-200 mb-1 font-pixel tracking-tight">Kerbybonk</h1>
             <p class="text-pink-400 text-xs sm:text-base font-bold mb-4 font-pixel">~ 能力變身倖存者 ~</p>
 
             <div class="mb-4">
@@ -217,8 +217,9 @@
             <h2 class="text-lg sm:text-xl font-bold text-yellow-300 font-pixel mb-3 pb-2 border-b border-purple-500/40">版本更新日誌</h2>
             <div class="custom-scroll overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-300 pr-1 text-left my-1">
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-red-400/50">
-                    <div class="font-bold text-red-300 font-pixel mb-1">v1.5.2 (效能穩定版)</div>
+                    <div class="font-bold text-red-300 font-pixel mb-1">v1.5.2 (Kerbybonk 穩定版)</div>
                     <ul class="list-disc list-inside space-y-1 text-slate-300 text-[11px] sm:text-xs">
+                        <li><b>遊戲更名</b>：正式更名為 Kerbybonk。</li>
                         <li><b>修復崩潰問題</b>：修正遊玩 1 分鐘時的記憶體堆積、無窮迴圈與實體過多卡死 Bug。</li>
                         <li><b>效能優化</b>：限制同畫面實體數量，加入離屏垃圾回收機制 (GC)。</li>
                     </ul>
@@ -274,7 +275,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'kirby-survivors';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'kerbybonk';
         const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
         let db = null, auth = null;
         let currentUser = null;
@@ -313,7 +314,7 @@
             }
 
             try {
-                const snapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'kirby_scores'));
+                const snapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'kerbybonk_scores'));
                 let scores = [];
                 snapshot.forEach(doc => scores.push(doc.data()));
                 
@@ -378,7 +379,6 @@
         const VIRTUAL_HEIGHT = 320; 
         let viewWidth = 480, viewHeight = 320, scaleFactor = 1;
 
-        // V1.5.2 嚴格實體上限，防止記憶體崩潰
         const MAX_ENEMIES = 150;
         const MAX_GEMS = 200;
 
@@ -581,7 +581,6 @@
 
             handleAttacks();
 
-            // 果實生成邏輯檢查
             if (gameTime >= nextFruitTime) {
                 nextFruitTime += 45;
                 const types = ['SWORD','FIRE','CUTTER','SPARK','BEAM','HAMMER']; 
@@ -591,7 +590,6 @@
                 sfx.fruitAppears();
             }
 
-            // 敵人生成：隨時間加速，但嚴格限制 MAX_ENEMIES 上限
             let spawnRate = Math.max(20, 50 - Math.floor(gameTime / 4));
             if (frameCount % spawnRate === 0 && enemies.length < MAX_ENEMIES) {
                 const dist = Math.hypot(viewWidth, viewHeight)/2 + 40; const a = Math.random()*Math.PI*2;
@@ -601,7 +599,6 @@
                 enemies.push({ x: player.x+Math.cos(a)*dist, y: player.y+Math.sin(a)*dist, type: t, hp, maxHp: hp, speed: spd, size: sz, hitFlash: 0 });
             }
 
-            // 更新投擲物
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i]; p.life--;
                 if (p.type === 'STAR_BULLET' || p.type === 'CUTTER_BLADE') {
@@ -621,12 +618,10 @@
                 if (p.life <= 0) projectiles.splice(i, 1);
             }
 
-            // 更新敵人與離屏清理 (GC)
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const e = enemies[i]; 
                 if(e.hitFlash > 0) e.hitFlash--; 
                 
-                // 距離玩家過遠直接回收，防止效能卡死
                 if (Math.abs(e.x - player.x) > 1200 || Math.abs(e.y - player.y) > 1200) { 
                     enemies.splice(i, 1); 
                     continue; 
@@ -647,14 +642,12 @@
                     createHitSpark(e.x, e.y, '#94a3b8'); 
                     expStars.push({ x: e.x, y: e.y, value: e.type==='gordo'?12:6 }); 
                     
-                    // 經驗星超過上限時移除最早的
                     if (expStars.length > MAX_GEMS) expStars.shift(); 
                     
                     enemies.splice(i, 1); 
                 }
             }
 
-            // 更新經驗星吸附
             for (let i = expStars.length - 1; i >= 0; i--) { 
                 const s = expStars[i]; 
                 const d = Math.hypot(player.x-s.x, player.y-s.y); 
@@ -662,7 +655,6 @@
                 if(d < 12) { player.exp += s.value; sfx.star(); expStars.splice(i, 1); checkLevelUp(); } 
             }
 
-            // 更新果實碰撞
             for (let i = fruits.length - 1; i >= 0; i--) { 
                 const f = fruits[i]; f.tick += 0.1; f.floatY = Math.sin(f.tick)*4; 
                 if(Math.hypot(player.x-f.x, player.y-f.y) < 24){ triggerFruitModal(f.type); fruits.splice(i, 1); return; } 
@@ -732,7 +724,7 @@
                 ui.scoreStatus.innerText = "正在上傳高分至排行榜...";
                 ui.scoreStatus.className = "text-yellow-300 text-xs mb-4 font-bold animate-pulse";
                 try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'kirby_scores'), {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'kerbybonk_scores'), {
                         nickname: playerName,
                         time: gameTime,
                         kills: killCount,
