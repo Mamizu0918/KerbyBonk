@@ -3,328 +3,1249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kirby Bonk!</title>
+    <title>星之卡比：倖存者大冒險 (Kirby Survivors)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;700;900&display=swap');
+
         * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none;
-        }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #121223;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #game-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            max-width: 1024px;
-            max-height: 768px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            background-color: #5bb381;
-            overflow: hidden;
-        }
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            image-rendering: pixelated;
+            touch-action: manipulation;
         }
 
-        .mobile-ui {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: none;
-            z-index: 20;
+        body {
+            font-family: 'Fredoka One', 'Noto Sans TC', sans-serif;
+            background-color: #0f172a;
+            color: #ffffff;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
         }
+
+        #game-canvas {
+            display: block;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            touch-action: none;
+        }
+
+        .custom-glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 12px 24px -6px rgba(236, 72, 153, 0.5);
+            border-color: #f472b6;
+        }
+
+        /* Virtual Joystick */
         #joystick-container {
+            display: none;
             position: absolute;
             bottom: 30px;
             left: 30px;
-            width: 130px;
-            height: 130px;
-            pointer-events: auto;
-            background: #ffa1c5;
-            border: 4px solid #331521;
-            border-radius: 20px;
-            box-shadow: inset -4px -4px 0px #d65b8c, inset 4px 4px 0px #ffcce0, 0 6px 0px #220d16;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            touch-action: none;
+            z-index: 50;
         }
+
         #joystick-stick {
             position: absolute;
-            width: 55px;
-            height: 55px;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            background: rgba(244, 114, 182, 0.8);
+            border: 3px solid #ffffff;
             border-radius: 50%;
-            background: #ff4081;
-            border: 3px solid #331521;
-            box-shadow: inset -3px -3px 0px #990033, inset 3px 3px 0px #ff80ab;
-        }
-        .pixel-btn {
-            position: absolute;
-            pointer-events: auto;
-            border-radius: 16px;
-            border: 4px solid #331521;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            color: #331521;
-            font-size: 16px;
-            text-shadow: 1px 1px 0px #fff;
-            cursor: pointer;
-        }
-        .pixel-btn:active { transform: translateY(4px); box-shadow: none !important; }
-        #btn-ability {
-            bottom: 135px; right: 35px; width: 90px; height: 80px;
-            background: #ffe066;
-            box-shadow: inset -4px -4px 0px #ccab00, inset 4px 4px 0px #fff0aa, 0 6px 0px #220d16;
-        }
-        #btn-inhale {
-            bottom: 35px; right: 35px; width: 90px; height: 80px;
-            background: #ff9ebb;
-            box-shadow: inset -4px -4px 0px #d65b8c, inset 4px 4px 0px #ffd1e0, 0 6px 0px #220d16;
-        }
-        #hud {
-            position: absolute;
-            top: 15px; left: 15px;
-            color: white; font-size: 18px; font-weight: bold;
-            text-shadow: 2px 2px 0px #000;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 12px 18px; border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(244, 114, 182, 0.6);
             pointer-events: none;
-            z-index: 20;
+        }
+
+        /* Custom Scrollbar for Card Containers */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen relative overflow-hidden select-none">
 
-<div id="game-container">
-    <canvas id="gameCanvas"></canvas>
+    <!-- Game Canvas -->
+    <canvas id="game-canvas" class="w-full h-full absolute inset-0 z-0"></canvas>
 
-    <div id="hud">
-        <div>❤️ HP: <span id="hp-text">100/100</span></div>
-        <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">精靈圖對齊模式</span></div>
-        <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動 / 空白鍵 吸氣</div>
+    <!-- Mobile Virtual Joystick -->
+    <div id="joystick-container">
+        <div id="joystick-stick"></div>
     </div>
 
-    <div id="mobile-ui" class="mobile-ui">
-        <div id="joystick-container"><div id="joystick-stick"></div></div>
-        <div id="btn-ability" class="pixel-btn"><span style="font-size: 20px;">⚔️</span><span>技能</span></div>
-        <div id="btn-inhale" class="pixel-btn"><span style="font-size: 20px;">🌀</span><span>吸氣</span></div>
+    <!-- HUD Overlay -->
+    <div id="hud" class="absolute top-0 left-0 w-full p-4 pointer-events-none z-10 flex flex-col gap-2">
+        <!-- Top Info Bar -->
+        <div class="flex justify-between items-center max-w-5xl mx-auto w-full">
+            <!-- Level & EXP -->
+            <div class="flex items-center gap-3 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-2xl border border-pink-500/30 shadow-lg">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center font-bold text-lg text-white shadow-md border-2 border-white">
+                    <span id="hud-level">1</span>
+                </div>
+                <div class="flex flex-col w-32 md:w-48">
+                    <div class="flex justify-between text-xs font-bold text-pink-300 mb-1">
+                        <span>等級 <span id="hud-level-text">1</span></span>
+                        <span id="hud-exp-text">0 / 10</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-pink-900/50">
+                        <div id="hud-exp-bar" class="bg-gradient-to-r from-pink-500 to-rose-300 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timer & Kills -->
+            <div class="flex items-center gap-6 bg-slate-900/80 backdrop-blur px-6 py-2 rounded-2xl border border-slate-700/50 shadow-lg">
+                <div class="text-center">
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">存活時間</div>
+                    <div id="hud-timer" class="text-xl md:text-2xl font-black text-amber-400 tracking-wider">00:00</div>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <div class="text-center">
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">擊敗數</div>
+                    <div id="hud-kills" class="text-xl md:text-2xl font-black text-rose-400 tracking-wider">0</div>
+                </div>
+            </div>
+
+            <!-- Health Bar -->
+            <div class="flex items-center gap-3 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-2xl border border-emerald-500/30 shadow-lg">
+                <div class="flex flex-col w-32 md:w-48">
+                    <div class="flex justify-between text-xs font-bold text-emerald-300 mb-1">
+                        <span><i class="fa-solid fa-heart text-rose-500 mr-1"></i>體力 (HP)</span>
+                        <span id="hud-hp-text">100 / 100</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-emerald-900/50">
+                        <div id="hud-hp-bar" class="bg-gradient-to-r from-emerald-500 to-green-300 h-full rounded-full transition-all duration-200" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Ability Icons Bar -->
+        <div id="hud-abilities" class="flex justify-center gap-2 max-w-md mx-auto mt-1 pointer-events-none">
+            <!-- Active skill icons injected dynamically -->
+        </div>
     </div>
-</div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const container = document.getElementById('game-container');
+    <!-- MAIN MENU OVERLAY -->
+    <div id="menu-overlay" class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+        <div class="max-w-md w-full custom-glass rounded-3xl p-8 text-center border border-pink-500/30 shadow-2xl relative overflow-hidden">
+            <!-- Decorative Glow Background -->
+            <div class="absolute -top-24 -left-24 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    document.getElementById('mobile-ui').style.display = 'block';
-}
+            <div class="text-5xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-300 to-yellow-300 mb-2 drop-shadow-lg">
+                星之卡比
+            </div>
+            <div class="text-lg font-bold text-pink-200 uppercase tracking-widest mb-6">倖存者大冒險</div>
 
-// 🖼️ 載入剛剛下載的精靈圖
-const kirbySprite = new Image();
-kirbySprite.src = 'kirby_asset.png';
+            <div class="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/50 mb-6 text-left text-sm text-slate-300 space-y-2">
+                <div class="font-bold text-pink-300 text-base mb-1 border-b border-slate-700 pb-1 flex items-center gap-2">
+                    <i class="fa-solid fa-gamepad"></i> 操作說明
+                </div>
+                <p><span class="text-amber-300 font-bold">W A S D</span> 或 <span class="text-amber-300 font-bold">方向鍵</span>：控制移動</p>
+                <p><span class="text-amber-300 font-bold">智慧型手機 / 觸控板</span>：使用畫面左下角虛擬搖桿</p>
+                <p><span class="text-amber-300 font-bold">複製能力</span>：卡比將會自動對周圍敵人發動攻擊！</p>
+            </div>
 
-const kirby = {
-    x: 0, y: 0,
-    speed: 4,
-    vx: 0, vy: 0,
-    facingRight: true,
-    
-    // 📐 精靈圖格線設定 (標準 32x32 格子)
-    frameWidth: 32,
-    frameHeight: 32,
-    displaySize: 64, // 遊戲中顯示的大小 (放大 2 倍)
-    
-    currentFrame: 0,
-    animTimer: 0,
-    animSpeed: 8, // 動畫切換速度
-    
-    state: 'idle',
-    isInhaling: false,
+            <button id="start-btn" class="w-full py-4 rounded-2xl font-black text-xl text-white bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 shadow-lg shadow-pink-500/30 transform transition active:scale-95 flex items-center justify-center gap-3 border-2 border-white/20">
+                <i class="fa-solid fa-play"></i> 開始遊戲
+            </button>
+        </div>
+    </div>
 
-    // 各個動作在圖片中的對應設定 (列號Row, 總格數Frames)
-    animations: {
-        idle: { row: 0, frames: 2 },
-        walk: { row: 1, frames: 4 },
-        inhale: { row: 2, frames: 3 }
-    },
+    <!-- LEVEL UP / SKILL SELECTION MODAL -->
+    <div id="levelup-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4">
+        <div class="max-w-2xl w-full text-center">
+            <div class="inline-block px-6 py-2 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 font-black text-2xl text-slate-950 shadow-lg mb-2 transform -rotate-1 border-2 border-white">
+                🎉 等級提升 LEVEL UP!
+            </div>
+            <p class="text-pink-200 text-sm font-bold mb-6">請選擇一項能力來強化卡比！</p>
 
-    initPosition() {
-        this.x = canvas.width / 2;
-        this.y = canvas.height / 2;
-    },
+            <!-- Cards Container -->
+            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Level Up Cards standard templates inserted here dynamically -->
+            </div>
+        </div>
+    </div>
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.x = Math.max(32, Math.min(canvas.width - 32, this.x));
-        this.y = Math.max(32, Math.min(canvas.height - 32, this.y));
+    <!-- GAME OVER / VICTORY MODAL -->
+    <div id="gameover-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
+        <div class="max-w-md w-full custom-glass rounded-3xl p-8 text-center border border-rose-500/40 shadow-2xl relative">
+            <div id="gameover-title" class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-red-500 mb-2">
+                遊戲結束 GAME OVER
+            </div>
+            <p id="gameover-subtitle" class="text-slate-300 text-sm mb-6">卡比力盡倒下了，再試一次吧！</p>
 
-        if (this.vx > 0) this.facingRight = true;
-        if (this.vx < 0) this.facingRight = false;
+            <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 mb-6 space-y-3">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400 font-bold">堅持時間</span>
+                    <span id="final-time" class="text-amber-400 font-black text-lg">00:00</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400 font-bold">擊敗敵數</span>
+                    <span id="final-kills" class="text-rose-400 font-black text-lg">0</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400 font-bold">達到等級</span>
+                    <span id="final-level" class="text-pink-400 font-black text-lg">1</span>
+                </div>
+            </div>
 
-        // 判斷狀態
-        let prevState = this.state;
-        if (this.isInhaling) {
-            this.state = 'inhale';
-        } else if (this.vx !== 0 || this.vy !== 0) {
-            this.state = 'walk';
-        } else {
-            this.state = 'idle';
+            <button id="restart-btn" class="w-full py-4 rounded-2xl font-black text-lg text-white bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg shadow-pink-500/30 transform transition active:scale-95 flex items-center justify-center gap-2 border border-white/20">
+                <i class="fa-solid fa-rotate-right"></i> 重新開始
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT GAME LOGIC -->
+    <script>
+        // --- AUDIO SYNTHESIS (Web Audio API) ---
+        class SoundEffects {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playPop() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playGem() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.05); // E5
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            }
+
+            playLevelUp() {
+                if (!this.ctx) return;
+                const notes = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
+                notes.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.08);
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime + i * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.08 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + i * 0.08);
+                    osc.stop(this.ctx.currentTime + i * 0.08 + 0.2);
+                });
+            }
+
+            playHit() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+
+            playChest() {
+                if (!this.ctx) return;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.06);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime + i * 0.06);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.06 + 0.15);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + i * 0.06);
+                    osc.stop(this.ctx.currentTime + i * 0.06 + 0.15);
+                });
+            }
         }
 
-        // 狀態改變時重置影格
-        if (prevState !== this.state) {
-            this.currentFrame = 0;
-            this.animTimer = 0;
+        const soundFX = new SoundEffects();
+
+        // --- SKILLS & COPY ABILITIES DEFINITIONS (Traditional Chinese) ---
+        const SKILL_DATABASE = {
+            sword: {
+                id: 'sword',
+                name: '利劍 (Sword)',
+                icon: 'fa-shield-halved',
+                color: '#3b82f6',
+                description: '揮舞銳利長劍，斬擊卡比正前方的所有敵人。',
+                level: 0,
+                maxLevel: 5,
+                cooldown: 50,
+                lastFired: 0
+            },
+            cutter: {
+                id: 'cutter',
+                name: '飛旋鏢 (Cutter)',
+                icon: 'fa-compact-disc',
+                color: '#f59e0b',
+                description: '擲出迴旋刀刃，會在穿透敵人後返回卡比手中。',
+                level: 0,
+                maxLevel: 5,
+                cooldown: 75,
+                lastFired: 0
+            },
+            fire: {
+                id: 'fire',
+                name: '烈火 (Fire)',
+                icon: 'fa-fire',
+                color: '#ef4444',
+                description: '圍繞卡比生成旋轉火球，持續燃燒靠近的敵人。',
+                level: 0,
+                maxLevel: 5,
+                cooldown: 0,
+                lastFired: 0
+            },
+            spark: {
+                id: 'spark',
+                name: '電光 (Spark)',
+                icon: 'fa-bolt',
+                color: '#eab308',
+                description: '定期向隨機敵人釋放連鎖閃電衝擊。',
+                level: 0,
+                maxLevel: 5,
+                cooldown: 90,
+                lastFired: 0
+            },
+            beam: {
+                id: 'beam',
+                name: '光束 (Beam)',
+                icon: 'fa-wand-magic-sparkles',
+                color: '#a855f7',
+                description: '釋放能量波鞭，掃過周圍敵人群。',
+                level: 0,
+                maxLevel: 5,
+                cooldown: 110,
+                lastFired: 0
+            },
+            speed: {
+                id: 'speed',
+                name: '輕盈鞋子 (Speed)',
+                icon: 'fa-shoe-prints',
+                color: '#10b981',
+                description: '提升卡比的移動速度 +15%。',
+                passive: true,
+                level: 0,
+                maxLevel: 5
+            },
+            maxhp: {
+                id: 'maxhp',
+                name: '終極蕃茄 (Maxim Tomato)',
+                icon: 'fa-apple-whole',
+                color: '#f43f5e',
+                description: '提升卡比最大體力值 +20，並立即補滿血量。',
+                passive: true,
+                level: 0,
+                maxLevel: 5
+            },
+            magnet: {
+                id: 'magnet',
+                name: '吸引星之卡 (Magnet)',
+                icon: 'fa-magnet',
+                color: '#06b6d4',
+                description: '擴大經驗星與寶物的拾取範圍 +30%。',
+                passive: true,
+                level: 0,
+                maxLevel: 5
+            }
+        };
+
+        // --- GAME ENGINE & SETUP ---
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game State Variables
+        let gameState = 'MENU'; // MENU, PLAYING, LEVELUP, GAMEOVER
+        let gameTime = 0;
+        let killCount = 0;
+        let frameCount = 0;
+
+        // Player (Kirby) Object
+        const player = {
+            x: 0,
+            y: 0,
+            radius: 20,
+            speed: 3.5,
+            hp: 100,
+            maxHp: 100,
+            level: 1,
+            exp: 0,
+            nextExp: 10,
+            facingRight: true,
+            skills: {},
+            pickupRadius: 70
+        };
+
+        // Inputs
+        const keys = {};
+        const joystick = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
+
+        // Game Entities Arrays
+        let enemies = [];
+        let projectiles = [];
+        let gems = [];
+        let particles = [];
+        let floatingTexts = [];
+
+        // Camera Offset
+        let cameraX = 0;
+        let cameraY = 0;
+
+        // Key Listeners
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        // Virtual Joystick setup for Mobile Touch
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickStick = document.getElementById('joystick-stick');
+
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            joystickContainer.style.display = 'block';
         }
 
-        // 播放動畫影格
-        this.animTimer++;
-        if (this.animTimer >= this.animSpeed) {
-            const currentAnim = this.animations[this.state];
-            this.currentFrame = (this.currentFrame + 1) % currentAnim.frames;
-            this.animTimer = 0;
+        joystickContainer.addEventListener('touchstart', e => {
+            const touch = e.touches[0];
+            const rect = joystickContainer.getBoundingClientRect();
+            joystick.active = true;
+            joystick.startX = rect.left + rect.width / 2;
+            joystick.startY = rect.top + rect.height / 2;
+            updateJoystick(touch.clientX, touch.clientY);
+        });
+
+        window.addEventListener('touchmove', e => {
+            if (!joystick.active) return;
+            const touch = e.touches[0];
+            updateJoystick(touch.clientX, touch.clientY);
+        });
+
+        window.addEventListener('touchend', () => {
+            joystick.active = false;
+            joystick.moveX = 0;
+            joystick.moveY = 0;
+            joystickStick.style.transform = `translate(-50%, -50%)`;
+        });
+
+        function updateJoystick(clientX, clientY) {
+            const dx = clientX - joystick.startX;
+            const dy = clientY - joystick.startY;
+            const dist = Math.hypot(dx, dy);
+            const maxDist = 45;
+
+            const angle = Math.atan2(dy, dx);
+            const clampedDist = Math.min(dist, maxDist);
+
+            const x = Math.cos(angle) * clampedDist;
+            const y = Math.sin(angle) * clampedDist;
+
+            joystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+
+            joystick.moveX = (x / maxDist);
+            joystick.moveY = (y / maxDist);
         }
 
-        const stateMap = { idle: '靜止站立', walk: '移動中', inhale: '吸氣中！' };
-        document.getElementById('ability-text').innerText = stateMap[this.state];
-    },
+        // --- GAME INIT & RESTART ---
+        function startGame() {
+            soundFX.init();
+            gameState = 'PLAYING';
 
-    draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
+            // Reset Player
+            player.x = 0;
+            player.y = 0;
+            player.hp = 100;
+            player.maxHp = 100;
+            player.level = 1;
+            player.exp = 0;
+            player.nextExp = 10;
+            player.speed = 3.5;
+            player.pickupRadius = 70;
+            player.skills = {};
 
-        if (!this.facingRight) {
-            ctx.scale(-1, 1);
+            // Initial Starter Ability: Sword (利劍)
+            player.skills['sword'] = { ...SKILL_DATABASE['sword'], level: 1 };
+
+            // Clear Arrays
+            enemies = [];
+            projectiles = [];
+            gems = [];
+            particles = [];
+            floatingTexts = [];
+
+            gameTime = 0;
+            killCount = 0;
+            frameCount = 0;
+
+            document.getElementById('menu-overlay').classList.add('hidden');
+            document.getElementById('gameover-modal').classList.add('hidden');
+            document.getElementById('levelup-modal').classList.add('hidden');
+
+            updateHUD();
         }
 
-        if (kirbySprite.complete && kirbySprite.naturalWidth !== 0) {
-            const currentAnim = this.animations[this.state];
-            const srcX = this.currentFrame * this.frameWidth;
-            const srcY = currentAnim.row * this.frameHeight;
+        // --- ENEMY SPAWNING ---
+        function spawnEnemy() {
+            if (enemies.length > 250) return;
 
-            // 繪製從 Sprite Sheet 裁切出來的影格
-            ctx.drawImage(
-                kirbySprite,
-                srcX, srcY, this.frameWidth, this.frameHeight,
-                -this.displaySize / 2, -this.displaySize / 2,
-                this.displaySize, this.displaySize
-            );
-        } else {
-            // 圖片還沒載入好時的備用圓形
+            // Spawn in a circle around player outside viewport
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.max(canvas.width, canvas.height) / 2 + 50;
+
+            const x = player.x + Math.cos(angle) * distance;
+            const y = player.y + Math.sin(angle) * distance;
+
+            // Types: 0: Waddle Dee, 1: Bronto Burt, 2: Gordo, 3: King Dedede / Boss
+            let type = 'waddle_dee';
+            let hp = 15 + Math.floor(gameTime * 0.5);
+            let speed = 1.2 + Math.random() * 0.4;
+            let radius = 16;
+            let color = '#f97316'; // Orange Waddle Dee
+            let expVal = 1;
+
+            const rand = Math.random();
+            if (gameTime > 30 && rand > 0.6) {
+                type = 'bronto_burt'; // Fast flying
+                hp = 10 + Math.floor(gameTime * 0.4);
+                speed = 2.2;
+                radius = 14;
+                color = '#ec4899';
+                expVal = 2;
+            } else if (gameTime > 60 && rand > 0.85) {
+                type = 'gordo'; // Spiky tank
+                hp = 45 + Math.floor(gameTime * 1.2);
+                speed = 0.8;
+                radius = 22;
+                color = '#475569';
+                expVal = 5;
+            } else if (frameCount % 1800 === 0 && gameTime > 40) {
+                // Boss: King Dedede (帝帝帝大王) or Meta Knight (魅塔騎士)
+                type = 'king_dedede';
+                hp = 350 + gameTime * 10;
+                speed = 1.0;
+                radius = 36;
+                color = '#dc2626';
+                expVal = 30;
+            }
+
+            enemies.push({ x, y, radius, hp, maxHp: hp, speed, color, type, expVal, hitTimer: 0 });
+        }
+
+        // --- SKILL / ATTACK SYSTEM ---
+        function updateSkills() {
+            Object.keys(player.skills).forEach(skillId => {
+                const sk = player.skills[skillId];
+                if (sk.passive) return;
+
+                sk.lastFired++;
+                if (sk.lastFired >= Math.max(15, sk.cooldown - (sk.level - 1) * 8)) {
+                    sk.lastFired = 0;
+                    activateSkill(sk);
+                }
+            });
+        }
+
+        function activateSkill(sk) {
+            if (sk.id === 'sword') {
+                // Sword slash attack front of Kirby
+                const slashDir = player.facingRight ? 1 : -1;
+                projectiles.push({
+                    type: 'sword_slash',
+                    x: player.x + slashDir * 25,
+                    y: player.y,
+                    radius: 35 + sk.level * 6,
+                    damage: 20 + sk.level * 8,
+                    life: 10,
+                    maxLife: 10,
+                    dir: slashDir,
+                    color: sk.color
+                });
+                soundFX.playPop();
+            } else if (sk.id === 'cutter') {
+                // Cutter boomerangs
+                const count = 1 + Math.floor(sk.level / 2);
+                for (let i = 0; i < count; i++) {
+                    const angle = (player.facingRight ? 0 : Math.PI) + (i - (count - 1) / 2) * 0.3;
+                    projectiles.push({
+                        type: 'cutter',
+                        x: player.x,
+                        y: player.y,
+                        vx: Math.cos(angle) * 7,
+                        vy: Math.sin(angle) * 7,
+                        radius: 12,
+                        damage: 15 + sk.level * 5,
+                        life: 80,
+                        maxLife: 80,
+                        color: sk.color,
+                        pierce: 99
+                    });
+                }
+                soundFX.playPop();
+            } else if (sk.id === 'spark') {
+                // Spark chain targeting nearest enemy
+                const nearest = getNearestEnemy();
+                if (nearest) {
+                    projectiles.push({
+                        type: 'spark_lightning',
+                        startX: player.x,
+                        startY: player.y,
+                        targetX: nearest.x,
+                        targetY: nearest.y,
+                        damage: 25 + sk.level * 10,
+                        life: 12,
+                        color: sk.color
+                    });
+                    nearest.hp -= (25 + sk.level * 10);
+                    nearest.hitTimer = 6;
+                    createFloatingText(`-${25 + sk.level * 10}`, nearest.x, nearest.y, '#facc15');
+                    soundFX.playHit();
+                }
+            } else if (sk.id === 'beam') {
+                // Beam whip arc
+                projectiles.push({
+                    type: 'beam_whip',
+                    x: player.x,
+                    y: player.y,
+                    angle: player.facingRight ? 0 : Math.PI,
+                    radius: 75 + sk.level * 10,
+                    damage: 12 + sk.level * 4,
+                    life: 15,
+                    maxLife: 15,
+                    color: sk.color
+                });
+                soundFX.playPop();
+            }
+        }
+
+        function getNearestEnemy() {
+            let closest = null;
+            let minDist = Infinity;
+            enemies.forEach(e => {
+                const dist = Math.hypot(e.x - player.x, e.y - player.y);
+                if (dist < minDist && dist < 350) {
+                    minDist = dist;
+                    closest = e;
+                }
+            });
+            return closest;
+        }
+
+        // --- FLOATING DAMAGE TEXTS ---
+        function createFloatingText(text, x, y, color = '#ffffff') {
+            floatingTexts.push({
+                text, x, y, color, life: 30, maxLife: 30, vy: -1.2
+            });
+        }
+
+        // --- LEVEL UP & CARD SELECTION MECHANICS ---
+        function triggerLevelUp() {
+            gameState = 'LEVELUP';
+            soundFX.playLevelUp();
+
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+
+            // Generate 3 random upgrade options
+            const availableSkills = Object.keys(SKILL_DATABASE).filter(id => {
+                const sk = player.skills[id];
+                return !sk || sk.level < SKILL_DATABASE[id].maxLevel;
+            });
+
+            // Shuffle
+            const choices = availableSkills.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+            choices.forEach(id => {
+                const dbSk = SKILL_DATABASE[id];
+                const currentSk = player.skills[id];
+                const currentLvl = currentSk ? currentSk.level : 0;
+
+                const card = document.createElement('div');
+                card.className = 'custom-glass card-hover rounded-2xl p-5 cursor-pointer flex flex-col justify-between items-center text-center relative border border-slate-700/60 bg-slate-900/90';
+
+                card.innerHTML = `
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white mb-3 shadow-md" style="background: ${dbSk.color}">
+                        <i class="fa-solid ${dbSk.icon}"></i>
+                    </div>
+                    <div class="font-black text-lg text-white mb-1">${dbSk.name}</div>
+                    <div class="text-xs font-bold text-amber-400 mb-2">${currentLvl === 0 ? '✨ 解鎖新技能！' : `等級 LV ${currentLvl} ➜ ${currentLvl + 1}`}</div>
+                    <p class="text-xs text-slate-300 mb-4 leading-relaxed">${dbSk.description}</p>
+                    <button class="w-full py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 font-bold text-xs text-white shadow-md hover:brightness-110">
+                        ${currentLvl === 0 ? '獲得能力' : '升級能力'}
+                    </button>
+                `;
+
+                card.onclick = () => selectUpgrade(id);
+                container.appendChild(card);
+            });
+
+            document.getElementById('levelup-modal').classList.remove('hidden');
+        }
+
+        function selectUpgrade(id) {
+            if (!player.skills[id]) {
+                player.skills[id] = { ...SKILL_DATABASE[id], level: 1 };
+            } else {
+                player.skills[id].level++;
+            }
+
+            // Apply passive bonuses immediately
+            if (id === 'speed') {
+                player.speed += 0.5;
+            } else if (id === 'maxhp') {
+                player.maxHp += 20;
+                player.hp = player.maxHp; // Full heal on Max HP increase
+            } else if (id === 'magnet') {
+                player.pickupRadius += 30;
+            }
+
+            document.getElementById('levelup-modal').classList.add('hidden');
+            gameState = 'PLAYING';
+            updateHUD();
+        }
+
+        // --- MAIN UPDATE LOOP ---
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            frameCount++;
+            if (frameCount % 60 === 0) {
+                gameTime++;
+                // Spawn enemies faster over time
+                if (gameTime % 5 === 0) spawnEnemy();
+            }
+
+            // Continuously spawn enemies
+            if (frameCount % Math.max(15, 60 - Math.floor(gameTime / 5)) === 0) {
+                spawnEnemy();
+            }
+
+            // 1. Move Player
+            let moveX = 0;
+            let moveY = 0;
+
+            if (keys['KeyW'] || keys['ArrowUp']) moveY -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) moveY += 1;
+            if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
+            if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+
+            if (joystick.active) {
+                moveX = joystick.moveX;
+                moveY = joystick.moveY;
+            }
+
+            // Normalize diagonal speed
+            if (moveX !== 0 && moveY !== 0 && !joystick.active) {
+                moveX *= 0.7071;
+                moveY *= 0.7071;
+            }
+
+            player.x += moveX * player.speed;
+            player.y += moveY * player.speed;
+
+            if (moveX > 0) player.facingRight = true;
+            if (moveX < 0) player.facingRight = false;
+
+            // Camera smoothly follows player
+            cameraX = player.x - canvas.width / 2;
+            cameraY = player.y - canvas.height / 2;
+
+            // 2. Fire Skills
+            updateSkills();
+
+            // Fire Aura (烈火) Passive Damage logic
+            if (player.skills['fire']) {
+                const fireLvl = player.skills['fire'].level;
+                const auraRadius = 45 + fireLvl * 10;
+                const fireDmg = 0.8 + fireLvl * 0.4;
+
+                enemies.forEach(e => {
+                    const dist = Math.hypot(e.x - player.x, e.y - player.y);
+                    if (dist < auraRadius + e.radius) {
+                        e.hp -= fireDmg;
+                        e.hitTimer = 2;
+                        if (Math.random() < 0.15) {
+                            createFloatingText(`-${Math.round(fireDmg * 10)}`, e.x, e.y, '#ef4444');
+                        }
+                    }
+                });
+            }
+
+            // 3. Update Projectiles
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const p = projectiles[i];
+                p.life--;
+
+                if (p.type === 'cutter') {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Boomerang effect back to player
+                    if (p.life < p.maxLife / 2) {
+                        const dx = player.x - p.x;
+                        const dy = player.y - p.y;
+                        p.vx += dx * 0.05;
+                        p.vy += dy * 0.05;
+                    }
+
+                    // Collision with enemies
+                    enemies.forEach(e => {
+                        const dist = Math.hypot(e.x - p.x, e.y - p.y);
+                        if (dist < p.radius + e.radius) {
+                            e.hp -= p.damage;
+                            e.hitTimer = 4;
+                            createFloatingText(`-${p.damage}`, e.x, e.y, '#f59e0b');
+                        }
+                    });
+                } else if (p.type === 'sword_slash') {
+                    // Check slash hits
+                    enemies.forEach(e => {
+                        const dist = Math.hypot(e.x - p.x, e.y - p.y);
+                        if (dist < p.radius + e.radius) {
+                            e.hp -= p.damage;
+                            e.hitTimer = 4;
+                            // Knockback
+                            e.x += p.dir * 4;
+                            createFloatingText(`-${p.damage}`, e.x, e.y, '#3b82f6');
+                        }
+                    });
+                } else if (p.type === 'beam_whip') {
+                    enemies.forEach(e => {
+                        const dist = Math.hypot(e.x - p.x, e.y - p.y);
+                        if (dist < p.radius + e.radius) {
+                            e.hp -= p.damage;
+                            e.hitTimer = 4;
+                            createFloatingText(`-${p.damage}`, e.x, e.y, '#a855f7');
+                        }
+                    });
+                }
+
+                if (p.life <= 0) {
+                    projectiles.splice(i, 1);
+                }
+            }
+
+            // 4. Update Enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                if (e.hitTimer > 0) e.hitTimer--;
+
+                // Move towards player
+                const angle = Math.atan2(player.y - e.y, player.x - e.x);
+                e.x += Math.cos(angle) * e.speed;
+                e.y += Math.sin(angle) * e.speed;
+
+                // Collide with Kirby
+                const distToPlayer = Math.hypot(player.x - e.x, player.y - e.y);
+                if (distToPlayer < player.radius + e.radius) {
+                    player.hp -= 0.5; // Damage over time on contact
+                    soundFX.playHit();
+                    if (player.hp <= 0) {
+                        triggerGameOver();
+                    }
+                }
+
+                // Enemy Death
+                if (e.hp <= 0) {
+                    killCount++;
+                    soundFX.playPop();
+
+                    // Spawn Star Experience Gem or Health Tomato
+                    const isChest = Math.random() < 0.02; // Treasure chest drop
+                    gems.push({
+                        x: e.x,
+                        y: e.y,
+                        val: e.expVal,
+                        isChest: isChest,
+                        radius: isChest ? 12 : 8
+                    });
+
+                    // Particles on death
+                    for (let p = 0; p < 6; p++) {
+                        particles.push({
+                            x: e.x,
+                            y: e.y,
+                            vx: (Math.random() - 0.5) * 4,
+                            vy: (Math.random() - 0.5) * 4,
+                            life: 15,
+                            color: e.color
+                        });
+                    }
+
+                    enemies.splice(i, 1);
+                }
+            }
+
+            // 5. Update Gems & Magnet Pickup
+            for (let i = gems.length - 1; i >= 0; i--) {
+                const g = gems[i];
+                const dist = Math.hypot(player.x - g.x, player.y - g.y);
+
+                if (dist < player.pickupRadius) {
+                    // Magnet fly towards player
+                    const angle = Math.atan2(player.y - g.y, player.x - g.x);
+                    g.x += Math.cos(angle) * 6;
+                    g.y += Math.sin(angle) * 6;
+                }
+
+                if (dist < player.radius + g.radius) {
+                    if (g.isChest) {
+                        // Treasure Chest grants instant heal + level bonus!
+                        soundFX.playChest();
+                        player.hp = Math.min(player.maxHp, player.hp + 40);
+                        createFloatingText('體力全滿！', player.x, player.y - 20, '#10b981');
+                        player.exp += 15;
+                    } else {
+                        soundFX.playGem();
+                        player.exp += g.val;
+                    }
+
+                    // Level Up check
+                    if (player.exp >= player.nextExp) {
+                        player.level++;
+                        player.exp -= player.nextExp;
+                        player.nextExp = Math.floor(player.nextExp * 1.4);
+                        triggerLevelUp();
+                    }
+
+                    gems.splice(i, 1);
+                }
+            }
+
+            // 6. Update Particles & Floating Text
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const pt = particles[i];
+                pt.x += pt.vx;
+                pt.y += pt.vy;
+                pt.life--;
+                if (pt.life <= 0) particles.splice(i, 1);
+            }
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.vy;
+                ft.life--;
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            updateHUD();
+        }
+
+        // --- RENDER GAME (HTML5 Canvas) ---
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            // Translate camera
+            ctx.translate(-cameraX, -cameraY);
+
+            // Draw Background Grid/Stars Pattern
+            drawBackground();
+
+            // 1. Draw Gems & Chests
+            gems.forEach(g => {
+                if (g.isChest) {
+                    // Treasure Chest (寶箱)
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(g.x - 10, g.y - 8, 20, 16);
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillRect(g.x - 3, g.y - 3, 6, 6);
+                } else {
+                    // Star Fragment Gem (經驗星)
+                    ctx.fillStyle = '#facc15';
+                    ctx.beginPath();
+                    ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+            });
+
+            // 2. Draw Projectiles & Skill Effects
+            projectiles.forEach(p => {
+                ctx.save();
+                if (p.type === 'sword_slash') {
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = 6;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, -Math.PI / 3, Math.PI / 3);
+                    ctx.stroke();
+                } else if (p.type === 'cutter') {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.stroke();
+                } else if (p.type === 'spark_lightning') {
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(p.startX, p.startY);
+                    ctx.lineTo((p.startX + p.targetX) / 2 + (Math.random() - 0.5) * 30, (p.startY + p.targetY) / 2 + (Math.random() - 0.5) * 30);
+                    ctx.lineTo(p.targetX, p.targetY);
+                    ctx.stroke();
+                } else if (p.type === 'beam_whip') {
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, p.angle - 0.8, p.angle + 0.8);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+
+            // Fire Aura Skill Render
+            if (player.skills['fire']) {
+                const auraR = 45 + player.skills['fire'].level * 10;
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, auraR, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Orbiting flames
+                const flameCount = 3 + player.skills['fire'].level;
+                for (let f = 0; f < flameCount; f++) {
+                    const angle = (frameCount * 0.05) + (f * (Math.PI * 2 / flameCount));
+                    const fx = player.x + Math.cos(angle) * auraR;
+                    const fy = player.y + Math.sin(angle) * auraR;
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.arc(fx, fy, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // 3. Draw Enemies
+            enemies.forEach(e => {
+                ctx.save();
+                ctx.fillStyle = e.hitTimer > 0 ? '#ffffff' : e.color;
+
+                if (e.type === 'king_dedede') {
+                    // Boss King Dedede (帝帝帝大王)
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Crown
+                    ctx.fillStyle = '#facc15';
+                    ctx.fillRect(e.x - 12, e.y - e.radius - 10, 24, 10);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Eyes
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(e.x - e.radius * 0.3, e.y - 3, 2.5, 0, Math.PI * 2);
+                ctx.arc(e.x + e.radius * 0.3, e.y - 3, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            });
+
+            // 4. Draw Player (Kirby 卡比)
+            ctx.save();
+            // Kirby Body (Pink Sphere)
+            ctx.fillStyle = '#f472b6'; // Kirby Pink
             ctx.beginPath();
-            ctx.arc(0, 0, 24, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffb6c1';
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = '#db2777';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Kirby Red Feet
+            ctx.fillStyle = '#e11d48';
+            ctx.beginPath();
+            ctx.ellipse(player.x - 10, player.y + 16, 8, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(player.x + 10, player.y + 16, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Kirby Eyes
+            ctx.fillStyle = '#1e3a8a';
+            const eyeOffset = player.facingRight ? 4 : -4;
+            ctx.beginPath();
+            ctx.ellipse(player.x - 5 + eyeOffset, player.y - 4, 3, 6, 0, 0, Math.PI * 2);
+            ctx.ellipse(player.x + 5 + eyeOffset, player.y - 4, 3, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rosy Cheeks
+            ctx.fillStyle = '#f43f5e';
+            ctx.beginPath();
+            ctx.arc(player.x - 10 + eyeOffset, player.y + 3, 3.5, 0, Math.PI * 2);
+            ctx.arc(player.x + 10 + eyeOffset, player.y + 3, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // 5. Draw Particles
+            particles.forEach(pt => {
+                ctx.fillStyle = pt.color;
+                ctx.fillRect(pt.x, pt.y, 4, 4);
+            });
+
+            // 6. Draw Floating Damage Text
+            floatingTexts.forEach(ft => {
+                ctx.fillStyle = ft.color;
+                ctx.font = '900 14px "Noto Sans TC", sans-serif';
+                ctx.fillText(ft.text, ft.x, ft.y);
+            });
+
+            ctx.restore();
         }
 
-        ctx.restore();
-    }
-};
+        function drawBackground() {
+            // Starry grid field
+            const gridSize = 100;
+            const startX = Math.floor(cameraX / gridSize) * gridSize;
+            const startY = Math.floor(cameraY / gridSize) * gridSize;
 
-function resizeCanvas() {
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
-    if (kirby.x === 0 && kirby.y === 0) kirby.initPosition();
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
 
-const keys = {};
-window.addEventListener('keydown', e => {
-    keys[e.key.toLowerCase()] = true;
-    if (e.code === 'Space') kirby.isInhaling = true;
-});
-window.addEventListener('keyup', e => {
-    keys[e.key.toLowerCase()] = false;
-    if (e.code === 'Space') kirby.isInhaling = false;
-});
-
-const inhaleBtn = document.getElementById('btn-inhale');
-inhaleBtn.addEventListener('touchstart', (e) => { e.preventDefault(); kirby.isInhaling = true; });
-inhaleBtn.addEventListener('touchend', (e) => { e.preventDefault(); kirby.isInhaling = false; });
-inhaleBtn.addEventListener('mousedown', () => kirby.isInhaling = true);
-inhaleBtn.addEventListener('mouseup', () => kirby.isInhaling = false);
-
-const base = document.getElementById('joystick-container');
-const stick = document.getElementById('joystick-stick');
-let joystickActive = false, touchStartX = 0, touchStartY = 0;
-
-base.addEventListener('touchstart', e => {
-    joystickActive = true;
-    const rect = base.getBoundingClientRect();
-    touchStartX = rect.left + rect.width / 2;
-    touchStartY = rect.top + rect.height / 2;
-}, {passive: false});
-
-window.addEventListener('touchmove', e => {
-    if (!joystickActive) return;
-    const touch = e.touches[0];
-    let dx = touch.clientX - touchStartX, dy = touch.clientY - touchStartY;
-    let dist = Math.hypot(dx, dy), maxR = 35;
-    if (dist > maxR) { dx = (dx / dist) * maxR; dy = (dy / dist) * maxR; }
-    stick.style.transform = `translate(${dx}px, ${dy}px)`;
-    kirby.vx = (dx / maxR) * kirby.speed;
-    kirby.vy = (dy / maxR) * kirby.speed;
-}, {passive: false});
-
-window.addEventListener('touchend', () => {
-    joystickActive = false;
-    stick.style.transform = `translate(0px, 0px)`;
-    kirby.vx = 0; kirby.vy = 0;
-});
-
-function gameLoop() {
-    if (!joystickActive) {
-        kirby.vx = 0; kirby.vy = 0;
-        if (keys['a'] || keys['arrowleft']) kirby.vx = -kirby.speed;
-        if (keys['d'] || keys['arrowright']) kirby.vx = kirby.speed;
-        if (keys['w'] || keys['arrowup']) kirby.vy = -kirby.speed;
-        if (keys['s'] || keys['arrowdown']) kirby.vy = kirby.speed;
-    }
-
-    kirby.update();
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 草地背景
-    ctx.fillStyle = '#5bb381';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#53a675';
-    for (let x = 0; x < canvas.width; x += 40) {
-        for (let y = 0; y < canvas.height; y += 40) {
-            if ((x + y) % 80 === 0) ctx.fillRect(x, y, 40, 40);
+            for (let x = startX; x < startX + canvas.width + gridSize; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, cameraY);
+                ctx.lineTo(x, cameraY + canvas.height);
+                ctx.stroke();
+            }
+            for (let y = startY; y < startY + canvas.height + gridSize; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(cameraX, y);
+                ctx.lineTo(cameraX + canvas.width, y);
+                ctx.stroke();
+            }
         }
-    }
 
-    kirby.draw();
+        // --- HUD UI UPDATES ---
+        function updateHUD() {
+            document.getElementById('hud-level').innerText = player.level;
+            document.getElementById('hud-level-text').innerText = player.level;
+            document.getElementById('hud-exp-text').innerText = `${player.exp} / ${player.nextExp}`;
+            document.getElementById('hud-exp-bar').style.width = `${Math.min(100, (player.exp / player.nextExp) * 100)}%`;
 
-    requestAnimationFrame(gameLoop);
-}
+            document.getElementById('hud-hp-text').innerText = `${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp}`;
+            document.getElementById('hud-hp-bar').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
 
-gameLoop();
-</script>
+            const mins = Math.floor(gameTime / 60).toString().padStart(2, '0');
+            const secs = (gameTime % 60).toString().padStart(2, '0');
+            document.getElementById('hud-timer').innerText = `${mins}:${secs}`;
+            document.getElementById('hud-kills').innerText = killCount;
+
+            // Render HUD Active Skill Icons
+            const hudAbilities = document.getElementById('hud-abilities');
+            hudAbilities.innerHTML = '';
+            Object.keys(player.skills).forEach(id => {
+                const sk = player.skills[id];
+                const iconBox = document.createElement('div');
+                iconBox.className = 'w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shadow-lg border border-white/20 relative';
+                iconBox.style.backgroundColor = sk.color;
+                iconBox.innerHTML = `
+                    <i class="fa-solid ${sk.icon}"></i>
+                    <span class="absolute -bottom-1 -right-1 text-[10px] bg-slate-950 px-1.5 rounded-full font-black text-amber-400 border border-slate-700">Lv${sk.level}</span>
+                `;
+                hudAbilities.appendChild(iconBox);
+            });
+        }
+
+        // --- GAME OVER ---
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+
+            const mins = Math.floor(gameTime / 60).toString().padStart(2, '0');
+            const secs = (gameTime % 60).toString().padStart(2, '0');
+
+            document.getElementById('final-time').innerText = `${mins}:${secs}`;
+            document.getElementById('final-kills').innerText = killCount;
+            document.getElementById('final-level').innerText = player.level;
+
+            document.getElementById('gameover-modal').classList.remove('hidden');
+        }
+
+        // --- MAIN GAME LOOP ---
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- BUTTON EVENT LISTENERS ---
+        document.getElementById('start-btn').onclick = startGame;
+        document.getElementById('restart-btn').onclick = startGame;
+
+        // Run Loop on Page Load
+        window.onload = () => {
+            gameLoop();
+        };
+    </script>
 </body>
 </html>
