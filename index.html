@@ -118,7 +118,7 @@
     <div id="hud">
         <div>❤️ HP: <span id="hp-text">100/100</span></div>
         <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">精靈圖往左微調中</span></div>
+        <div>🔥 狀態: <span id="ability-text">清除黑點修正中</span></div>
         <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動測試</div>
     </div>
     <div id="mobile-ui" class="mobile-ui">
@@ -146,12 +146,12 @@ const kirby = {
     vx: 0, vy: 0,
     facingRight: true,
     
-    // 🎯 調整區：已經將 startX 改為 -4（往左微調），若還需要更左可改為 -8、-12 等
-    frameWidth: 32,   
-    frameHeight: 32,  
-    startX: -4,       
-    startY: 0,        
-    spacing: 0,       
+    // 🎯 調整區：微調起始點與格線，避開多餘的黑點雜訊
+    frameWidth: 28,   
+    frameHeight: 28,  
+    startX: 4,        // 略微內縮，避開左側邊緣黑點
+    startY: 4,        // 略微內縮，避開上方邊緣雜訊
+    spacing: 4,       // 格子間距
     
     displaySize: 56,  
     
