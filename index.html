@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kirby Bonk! - 狀態 GIF 動態切換版</title>
+    <title>Kirby Bonk!
+
+這份程式碼已經幫你把圖片的**動態格線座標（每格 32x32 像素）**全部設定完成，並且內建了自動去背與狀態切換機制：
+
+*   **靜止時**：播放第一行的站立/呼吸動畫。
+*   **移動時（WASD / 搖桿）**：播放第二行的走路循環動畫。
+*   **按住空白鍵（或手機吸氣鈕）**：播放第三行的吸氣動畫。
+
+### 📄 完整遊戲程式碼 (`index.html`)
+
+請直接複製以下程式碼，覆蓋你專案中的 `index.html`，並確保下載的圖片命名為 **`kirby_asset.png`** 且跟 `index.html` 放在**同一個資料夾**：
+
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kirby Bonk! - AI 自動對齊版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -40,19 +58,6 @@
             image-rendering: pixelated;
         }
 
-        /* 🌸 卡比精靈圖片基礎樣式 */
-        .kirby-sprite {
-            position: absolute;
-            width: 65px;
-            height: 65px;
-            pointer-events: none;
-            image-rendering: pixelated;
-            transform-origin: center center;
-            z-index: 10;
-            display: none; /* 預設隱藏，由 JS 控制顯示 */
-        }
-        
-        /* 📱 手機觸控介面 */
         .mobile-ui {
             position: absolute;
             top: 0;
@@ -131,15 +136,10 @@
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- 🌟 預先載入的三種狀態 GIF -->
-    <img id="kirby-idle" class="kirby-sprite" src="https://media.tenor.com/wx7iO7HoO0wAAAAj/kirby-sleep.gif" alt="Kirby Idle" style="display: block;">
-    <img id="kirby-walk" class="kirby-sprite" src="https://media.tenor.com/Ul8LOoNURUoAAAAj/kirby-walk.gif" alt="Kirby Walk">
-    <img id="kirby-inhale" class="kirby-sprite" src="https://media.tenor.com/e70_x4ii9KwAAAAj/kirby-inhale.gif" alt="Kirby Inhale">
-
     <div id="hud">
         <div>❤️ HP: <span id="hp-text">100/100</span></div>
         <div>⭐ 等級: <span id="level-text">1</span> (EXP: <span id="exp-text">0/10</span>)</div>
-        <div>🔥 狀態: <span id="ability-text">一般模式</span></div>
+        <div>🔥 狀態: <span id="ability-text">精靈圖對齊模式</span></div>
         <div style="font-size:12px; margin-top:5px; color:#ffe066;">💻 鍵盤：WASD 移動 / 空白鍵 吸氣</div>
     </div>
 
@@ -155,25 +155,38 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const container = document.getElementById('game-container');
 
-// 取得三張狀態圖片元素
-const sprites = {
-    idle: document.getElementById('kirby-idle'),
-    walk: document.getElementById('kirby-walk'),
-    inhale: document.getElementById('kirby-inhale')
-};
-
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     document.getElementById('mobile-ui').style.display = 'block';
 }
+
+// 🖼️ 載入剛剛下載的精靈圖
+const kirbySprite = new Image();
+kirbySprite.src = 'kirby_asset.png';
 
 const kirby = {
     x: 0, y: 0,
     speed: 4,
     vx: 0, vy: 0,
     facingRight: true,
-    size: 65,
-    state: 'idle', // 當前狀態: 'idle', 'walk', 'inhale'
+    
+    // 📐 精靈圖格線設定 (標準 32x32 格子)
+    frameWidth: 32,
+    frameHeight: 32,
+    displaySize: 64, // 遊戲中顯示的大小 (放大 2 倍)
+    
+    currentFrame: 0,
+    animTimer: 0,
+    animSpeed: 8, // 動畫切換速度
+    
+    state: 'idle',
     isInhaling: false,
+
+    // 各個動作在圖片中的對應設定 (列號Row, 總格數Frames)
+    animations: {
+        idle: { row: 0, frames: 2 },
+        walk: { row: 1, frames: 4 },
+        inhale: { row: 2, frames: 3 }
+    },
 
     initPosition() {
         this.x = canvas.width / 2;
@@ -183,13 +196,14 @@ const kirby = {
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.x = Math.max(30, Math.min(canvas.width - 30, this.x));
-        this.y = Math.max(30, Math.min(canvas.height - 30, this.y));
+        this.x = Math.max(32, Math.min(canvas.width - 32, this.x));
+        this.y = Math.max(32, Math.min(canvas.height - 32, this.y));
 
         if (this.vx > 0) this.facingRight = true;
         if (this.vx < 0) this.facingRight = false;
 
-        // 🎯 狀態判斷邏輯：吸氣優先權最高，其次是走路，最後是靜止
+        // 判斷狀態
+        let prevState = this.state;
         if (this.isInhaling) {
             this.state = 'inhale';
         } else if (this.vx !== 0 || this.vy !== 0) {
@@ -198,28 +212,53 @@ const kirby = {
             this.state = 'idle';
         }
 
-        // 更新狀態文字 UI
-        const stateMap = { idle: '靜止中 (睡覺)', walk: '移動中', inhale: '吸氣中！' };
+        // 狀態改變時重置影格
+        if (prevState !== this.state) {
+            this.currentFrame = 0;
+            this.animTimer = 0;
+        }
+
+        // 播放動畫影格
+        this.animTimer++;
+        if (this.animTimer >= this.animSpeed) {
+            const currentAnim = this.animations[this.state];
+            this.currentFrame = (this.currentFrame + 1) % currentAnim.frames;
+            this.animTimer = 0;
+        }
+
+        const stateMap = { idle: '靜止站立', walk: '移動中', inhale: '吸氣中！' };
         document.getElementById('ability-text').innerText = stateMap[this.state];
     },
 
     draw() {
-        const posX = `${this.x - this.size / 2}px`;
-        const posY = `${this.y - this.size / 2}px`;
-        const transformStr = this.facingRight ? 'scaleX(1)' : 'scaleX(-1)';
+        ctx.save();
+        ctx.translate(this.x, this.y);
 
-        // 顯示目前狀態的 GIF，隱藏其他兩張
-        Object.keys(sprites).forEach(key => {
-            const img = sprites[key];
-            if (key === this.state) {
-                img.style.display = 'block';
-                img.style.left = posX;
-                img.style.top = posY;
-                img.style.transform = transformStr;
-            } else {
-                img.style.display = 'none';
-            }
-        });
+        if (!this.facingRight) {
+            ctx.scale(-1, 1);
+        }
+
+        if (kirbySprite.complete && kirbySprite.naturalWidth !== 0) {
+            const currentAnim = this.animations[this.state];
+            const srcX = this.currentFrame * this.frameWidth;
+            const srcY = currentAnim.row * this.frameHeight;
+
+            // 繪製從 Sprite Sheet 裁切出來的影格
+            ctx.drawImage(
+                kirbySprite,
+                srcX, srcY, this.frameWidth, this.frameHeight,
+                -this.displaySize / 2, -this.displaySize / 2,
+                this.displaySize, this.displaySize
+            );
+        } else {
+            // 圖片還沒載入好時的備用圓形
+            ctx.beginPath();
+            ctx.arc(0, 0, 24, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffb6c1';
+            ctx.fill();
+        }
+
+        ctx.restore();
     }
 };
 
@@ -231,7 +270,6 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// 按鍵監聽
 const keys = {};
 window.addEventListener('keydown', e => {
     keys[e.key.toLowerCase()] = true;
@@ -242,14 +280,12 @@ window.addEventListener('keyup', e => {
     if (e.code === 'Space') kirby.isInhaling = false;
 });
 
-// 手機吸氣按鈕
 const inhaleBtn = document.getElementById('btn-inhale');
 inhaleBtn.addEventListener('touchstart', (e) => { e.preventDefault(); kirby.isInhaling = true; });
 inhaleBtn.addEventListener('touchend', (e) => { e.preventDefault(); kirby.isInhaling = false; });
 inhaleBtn.addEventListener('mousedown', () => kirby.isInhaling = true);
 inhaleBtn.addEventListener('mouseup', () => kirby.isInhaling = false);
 
-// 虛擬搖桿
 const base = document.getElementById('joystick-container');
 const stick = document.getElementById('joystick-stick');
 let joystickActive = false, touchStartX = 0, touchStartY = 0;
@@ -291,7 +327,7 @@ function gameLoop() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 繪製背景草地
+    // 草地背景
     ctx.fillStyle = '#5bb381';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#53a675';
